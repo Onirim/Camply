@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════
-// RPG CAMPAIGN MANAGER — Internationalisation (i18n)
+// Quick TTRPG Manager — Internationalisation (i18n)
 //
 // Ce fichier contient UNIQUEMENT les clés génériques du template.
 // Les clés spécifiques au jeu (rangs, attributs, pouvoirs...)
