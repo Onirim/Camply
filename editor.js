@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════
-// RPG CAMPAIGN MANAGER — Éditeur de personnage
+// Quick TTRPG Manager — Éditeur de personnage
 // Les calculs de points et le rendu de fiche sont délégués
 // à game-system.js. Ce fichier gère uniquement l'UI de l'éditeur.
 // ══════════════════════════════════════════════════════════════
