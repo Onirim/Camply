@@ -22,6 +22,7 @@
 <link rel="stylesheet" href="chronicles.css" />
 <link rel="stylesheet" href="documents.css" />
 <link rel="stylesheet" href="campaigns.css" />
+<link rel="stylesheet" href="rulebook.css" />
 <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
 <script>
   document.addEventListener('click', e => {
@@ -85,6 +86,7 @@
       <button id="nav-chronicles" onclick="showView('chronicles')" data-i18n="nav_chronicles">Chroniques</button>
       <button id="nav-documents" onclick="showView('documents')" data-i18n="nav_documents">Documents</button>
       <button id="nav-campaigns" onclick="showView('campaigns')" data-i18n="nav_campaigns">Campagnes</button>
+      <button id="nav-rulebook" onclick="showView('rulebook')" data-i18n="nav_rulebook">Règles</button>
     </nav>
 
     <div class="topbar-right">
@@ -923,7 +925,47 @@
 
       </div>
     </div>
-
+     <!-- VUE RÈGLES DU JEU -->
+    <div id="view-rulebook">
+      <div class="rulebook-layout">
+ 
+        <!-- Index latéral -->
+        <nav class="rulebook-toc">
+          <div class="rulebook-toc-header">
+            <div class="rulebook-toc-title">Index</div>
+            <button
+              id="rulebook-toc-toggle-btn"
+              class="rulebook-toc-toggle"
+              onclick="toggleRulebookToc()">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13">
+                <line x1="1" y1="4" x2="15" y2="4"/>
+                <line x1="1" y1="8" x2="10" y2="8"/>
+                <line x1="1" y1="12" x2="7" y2="12"/>
+              </svg>
+              Afficher l'index
+            </button>
+            <div class="rulebook-toc-search">
+              <svg class="rulebook-toc-search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="6.5" cy="6.5" r="4"/>
+                <line x1="10" y1="10" x2="14" y2="14"/>
+              </svg>
+              <input
+                type="text"
+                placeholder="Rechercher…"
+                oninput="rulebookTocSearch(this.value)"
+                autocomplete="off">
+            </div>
+          </div>
+          <ul class="rulebook-toc-list" id="rulebook-toc-list"></ul>
+        </nav>
+ 
+        <!-- Contenu principal -->
+        <div class="rulebook-content">
+          <div class="rulebook-content-inner" id="rulebook-body"></div>
+        </div>
+ 
+      </div>
+    </div>
   </div><!-- /main -->
 </div><!-- /app -->
 
@@ -1000,6 +1042,7 @@
 <script src="chronicles.js"></script>
 <script src="documents.js"></script>
 <script src="campaigns.js"></script>
+<script src="rulebook.js"></script>
 <script src="tags.js"></script>
 <script src="editor.js"></script>
 <script src="scripts.js"></script>
