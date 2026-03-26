@@ -23,6 +23,7 @@
 <link rel="stylesheet" href="documents.css" />
 <link rel="stylesheet" href="campaigns.css" />
 <link rel="stylesheet" href="rulebook.css" />
+<link rel="stylesheet" href="transfert.css" />
 <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
 <script>
   document.addEventListener('click', e => {
@@ -167,6 +168,13 @@
             <div class="uname" id="dd-username">—</div>
             <div class="uemail" id="dd-email">—</div>
           </div>
+          <button class="user-dropdown-item" onclick="openTransferModal()">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M4 10h8M9 6l4 4-4 4"/>
+              <path d="M3 7l-2-2 2-2" opacity="0.5"/>
+            </svg>
+            <span data-i18n="user_transfer">Transférer un élément</span>
+          </button>
           <button class="user-dropdown-item danger" onclick="doLogout()">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
               <path d="M6 3H3v10h3M10 5l3 3-3 3M13 8H6"/>
@@ -1045,6 +1053,10 @@
 <script src="rulebook.js"></script>
 <script src="tags.js"></script>
 <script src="editor.js"></script>
+<script src="transfert.js"></script>  
 <script src="scripts.js"></script>
+  <div id="transfer-modal">
+  <div id="transfer-modal-panel"></div>
+</div>
 </body>
 </html>
