@@ -11,14 +11,17 @@ Stack : HTML/CSS/JS vanilla + Supabase + GitHub Pages.
 - Campagnes (collections regroupant personnages + chroniques + documents)
 - Système de partage par code à 8 caractères
 - Abonnement aux contenus d'autres joueurs
+- Transferts de propriété des objets
 - Tags et filtres
 - Upload d'illustrations
 - i18n FR/EN
 - PWA (service worker, manifest)
 
+
 ## A adapter pour chaque jeu
 
-**Un seul fichier : `game-system.js`**
+- `game-system.js`
+- `editor.js`
 
 ---
 
@@ -47,6 +50,8 @@ Stack : HTML/CSS/JS vanilla + Supabase + GitHub Pages.
   7. `sql/06_storage.sql`
   8. `sql/07_migration_campaigns.sql`
   9. `sql/08_fix_profiles-v2.sql`
+  10. `sql/09_character_tag.sql`
+  11. `sql/10_transfer.sql`
 - Configurer l'auth Discord dans Authentication > Providers
 - Ajouter l'URL GitHub Pages dans Authentication > URL Configuration
 
@@ -58,9 +63,9 @@ const SUPABASE_KEY = 'sb_publishable_XXXX';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 ```
 
-### 5. Adapter `game-system.js`
+### 5. Adapter `game-system.js` et `editor.js`
 
-C'est le seul fichier vraiment spécifique au. Voir la section ci-dessous.
+Ce sont les deux seuls fichier vraiment spécifiques au jeu. Voir la section ci-dessous.
 
 ### 6. Mettre à jour le branding
 
@@ -179,6 +184,7 @@ Object.keys(GAME_I18N).forEach(lang => {
 <script src="campaigns.js"></script>
 <script src="tags.js"></script>
 <script src="editor.js"></script>
+<script src="transfer.js"></script>
 <script src="scripts.js"></script>     <!-- en dernier -->
 ```
 
