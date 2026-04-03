@@ -752,6 +752,25 @@ function navigateToCampaign(campaignCode) {
   return true;
 }
 
+/**
+ * Appelle la RPC `sync_owner_tags` pour copier les tags du
+ * propriétaire vers l'abonné courant.
+ * Silencieux en cas d'erreur (non bloquant).
+ *
+ * @param {'char'|'doc'} type
+ * @param {string}       itemId  UUID de l'objet
+ */
+async function syncOwnerTagsToMe(type, itemId) {
+  try {
+    await sb.rpc('sync_owner_tags', {
+      p_item_type: type,
+      p_item_id:   itemId,
+    });
+  } catch (err) {
+    console.warn('syncOwnerTagsToMe: non-fatal error', err);
+  }
+}
+
 // ── Boot ──────────────────────────────────────────────────────
 document.getElementById('app').style.display = 'none';
 init();
