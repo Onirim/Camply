@@ -177,11 +177,19 @@ async function followDocByCode(code) {
   if (error || !data) { showToast(t('toast_doc_not_found')); return; }
   if (data.user_id === currentUser.id) { showToast(t('toast_doc_own')); return; }
   if (followedDocIds.includes(data.id)) { showToast(t('toast_doc_already_followed')); return; }
+ 
   const { error: err } = await sb.from('followed_documents')
     .insert({ user_id: currentUser.id, document_id: data.id });
   if (err) { showToast(t('toast_doc_follow_error')); return; }
+ 
   followedDocIds.push(data.id);
+ 
+  // ── NOUVEAU : sync des tags du propriétaire ───────────────
+  await syncOwnerTagsToMe('doc', data.id);
+  // ─────────────────────────────────────────────────────────
+ 
   await loadFollowedDocumentsFromDB();
+  await loadDocTagsFromDB();              // recharge allDocTags avec les nouveaux tags créés
   document.getElementById('doc-follow-input').value = '';
   renderDocumentsList();
   showToast(ti('toast_doc_subscribed', { title: data.title }));
