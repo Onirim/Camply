@@ -441,10 +441,49 @@ function openDocReader(id) {
   const d = followedDocuments[id] || documents[id];
   if (!d) return;
   const isOwn = !!documents[id];
+
+  // ── Rendu du contenu Markdown dans un div temporaire ──
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = d.content ? marked.parse(d.content) : '';
+
+  // ── Collecte les H1 et H2 pour l'index ────────────────
+  const headings = [];
+  tempDiv.querySelectorAll('h1, h2').forEach((el, idx) => {
+    const level = parseInt(el.tagName[1]);
+    const text  = el.textContent.trim();
+    const anchorId = `doc-h-${idx}-${text.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40)}`;
+    el.id = anchorId;
+    headings.push({ level, text, id: anchorId });
+  });
+
+  const hasIndex = headings.length > 0;
+
+  // ── Construit le TOC ───────────────────────────────────
+  let tocHtml = '';
+  if (hasIndex) {
+    const tocItems = headings.map(h => `
+      <li class="doc-toc-item">
+        <div class="doc-toc-link" data-level="${h.level}" data-target="${h.id}"
+          onclick="docTocScrollTo('${h.id}')" title="${esc(h.text)}">
+          ${esc(h.text)}
+        </div>
+      </li>`).join('');
+    tocHtml = `
+      <nav class="doc-reader-toc">
+        <div class="doc-reader-toc-header">
+          <div class="doc-reader-toc-title">Index</div>
+        </div>
+        <ul class="doc-reader-toc-list" id="doc-reader-toc-list">${tocItems}</ul>
+      </nav>`;
+  }
+
+  // ── Illustration ───────────────────────────────────────
   const illusHtml = d.illustration_url
     ? `<img class="doc-reader-illus" src="${esc(d.illustration_url)}"
         style="object-position:center ${d.illustration_position||0}%"
         onclick="openLightbox('${esc(d.illustration_url)}')" alt="">` : '';
+
+  // ── Bannière ───────────────────────────────────────────
   const bannerHtml = isOwn
     ? `<div class="doc-reader-header">
         <button class="btn-cancel" onclick="openDocEditor('${id}')">
@@ -459,16 +498,72 @@ function openDocReader(id) {
         </svg>
         ${t('doc_reader_banner')}
        </div>`;
+
   const metaHtml = d._owner_name
     ? `<div class="doc-reader-meta">${t('followed_owner_prefix')}${esc(d._owner_name)}</div>` : '';
-  document.getElementById('doc-reader-content').innerHTML = `
+
+  // ── Corps final ────────────────────────────────────────
+  const contentHtml = `
     ${bannerHtml}
     ${illusHtml}
     <h1 class="doc-reader-title">${esc(d.title)}</h1>
     ${metaHtml}
-    <div class="doc-reader-body">${d.content ? marked.parse(d.content) : ''}</div>`;
+    <div class="doc-reader-body">${tempDiv.innerHTML}</div>`;
+
+  // ── Injecte dans le layout ────────────────────────────
+  const view = document.getElementById('view-doc-reader');
+  view.innerHTML = hasIndex
+    ? `<div class="doc-reader-layout">
+        ${tocHtml}
+        <div class="doc-reader-main" id="doc-reader-main">
+          <div id="doc-reader-content">${contentHtml}</div>
+        </div>
+       </div>`
+    : `<div id="doc-reader-content">${contentHtml}</div>`;
+
   showView('doc-reader');
   if (d.share_code) setHash('doc', d.share_code);
+
+  // ── Scroll spy ────────────────────────────────────────
+  if (hasIndex) {
+    requestAnimationFrame(() => _initDocScrollSpy(headings));
+  }
+}
+
+function docTocScrollTo(id) {
+  const target = document.getElementById(id);
+  if (!target) return;
+  const main = document.getElementById('doc-reader-main');
+  if (main && main.scrollHeight > main.clientHeight + 1) {
+    const mainTop    = main.getBoundingClientRect().top;
+    const targetTop  = target.getBoundingClientRect().top;
+    const offset     = targetTop - mainTop + main.scrollTop - 24;
+    main.scrollTo({ top: offset, behavior: 'smooth' });
+  } else {
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function _initDocScrollSpy(headings) {
+  const main = document.getElementById('doc-reader-main');
+  if (!main || !headings.length) return;
+  if (window._docReaderObserver) window._docReaderObserver.disconnect();
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        document.querySelectorAll('.doc-toc-link').forEach(el => {
+          el.classList.toggle('active', el.dataset.target === entry.target.id);
+        });
+      }
+    });
+  }, { root: main, rootMargin: '-10% 0px -75% 0px', threshold: 0 });
+
+  headings.forEach(h => {
+    const el = document.getElementById(h.id);
+    if (el) observer.observe(el);
+  });
+  window._docReaderObserver = observer;
 }
 
 // ══════════════════════════════════════════════════════════════
