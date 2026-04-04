@@ -260,31 +260,20 @@ function renderFollowedTagChips(charId, tags) {
 }
 
 async function removeFollowedTag(charId, tagId) {
+  // 1. Retire la liaison locale
   followedTagMap[charId] = (followedTagMap[charId] || []).filter(id => id !== tagId);
   await sb.from('followed_character_tags')
     .delete()
     .eq('user_id', currentUser.id)
     .eq('character_id', charId)
     .eq('tag_id', tagId);
-
-  // Vérifie si le tag est encore utilisé (persos propres ou suivis)
-  const usedInOwn = Object.values(charTagMap)
-    .some(ids => ids.includes(tagId));
-  const usedInFollowed = Object.values(followedTagMap)
-    .some(ids => ids.includes(tagId));
-
-  if (!usedInOwn && !usedInFollowed) {
-    // Vérifie aussi en base (sécurité)
-    const { count } = await sb.from('character_tags')
-      .select('*', { count: 'exact', head: true }).eq('tag_id', tagId);
-    const { count: countFollowed } = await sb.from('followed_character_tags')
-      .select('*', { count: 'exact', head: true }).eq('tag_id', tagId);
-    if (count === 0 && countFollowed === 0) {
-      await sb.from('tags').delete().eq('id', tagId);
-      allTags = allTags.filter(x => x.id !== tagId);
-    }
-  }
-
+ 
+  // 2. Purge côté serveur les tags devenus orphelins
+  await cleanupOrphanTags('char');
+ 
+  // 3. Recharge pour que allTags soit à jour
+  await loadTagsFromDB();
+ 
   renderFollowedTagChips(charId);
   renderList();
 }
