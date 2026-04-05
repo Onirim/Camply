@@ -309,6 +309,24 @@ async function unfollowCampaign(id) {
   showToast(t('toast_campaign_unsubscribed'));
 }
 
+async function getFollowedCampaignTitlesByItem(itemType, shareCode) {
+  if (!itemType || !shareCode || !followedCampaignIds.length) return [];
+  const { data, error } = await sb
+    .from('campaign_items')
+    .select('campaign_id')
+    .in('campaign_id', followedCampaignIds)
+    .eq('item_type', itemType)
+    .eq('share_code', shareCode);
+
+  if (error || !data?.length) return [];
+  const titleSet = new Set();
+  data.forEach(row => {
+    const title = followedCampaigns[row.campaign_id]?.title;
+    if (title) titleSet.add(title);
+  });
+  return [...titleSet];
+}
+
 // ══════════════════════════════════════════════════════════════
 // RENDU — LISTE
 // ══════════════════════════════════════════════════════════════
