@@ -192,6 +192,15 @@ async function followDocByCode(code) {
 }
 
 async function unfollowDocument(id) {
+  const doc = followedDocuments[id];
+  const blockingCampaigns = await getFollowedCampaignTitlesByItem('doc', doc?.share_code);
+  if (blockingCampaigns.length) {
+    showToast(ti('toast_unfollow_blocked_by_campaigns', {
+      type: t('campaign_type_doc'),
+      campaigns: blockingCampaigns.join(', ')
+    }));
+    return;
+  }
   // 1. Supprime les tags locaux liés à ce document
   await sb.from('followed_document_tags')
     .delete()
