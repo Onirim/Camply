@@ -122,6 +122,7 @@ const TRANSLATIONS = {
     toast_campaign_subscribed:      'Abonné à "${title}" !',
     toast_campaign_unsubscribed:    'Abonnement supprimé.',
     toast_campaign_synced:          '${n} nouvel(aux) élément(s) ajouté(s) depuis vos campagnes.',
+    toast_unfollow_blocked_by_campaigns: 'Impossible de se désabonner de ce ${type} : il fait partie de la (des) campagne(s) suivante(s) : ${campaigns}.',
 
     // ── Confirmations ─────────────────────────────────────────
     confirm_delete_char:     'Supprimer "${name}" ?',
@@ -376,6 +377,7 @@ const TRANSLATIONS = {
     toast_campaign_subscribed:       'Subscribed to "${title}"!',
     toast_campaign_unsubscribed:     'Subscription removed.',
     toast_campaign_synced:           '${n} new item(s) added from your campaigns.',
+    toast_unfollow_blocked_by_campaigns: 'Cannot unsubscribe from this ${type}: it belongs to the following campaign(s): ${campaigns}.',
 
     // ── Confirms ──────────────────────────────────────────────
     confirm_delete_char:     'Delete "${name}"?',
