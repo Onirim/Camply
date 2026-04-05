@@ -234,6 +234,15 @@ async function followChrByCode(code) {
 }
 
 async function unfollowChronicle(id) {
+  const chr = followedChronicles[id];
+  const blockingCampaigns = await getFollowedCampaignTitlesByItem('chr', chr?.share_code);
+  if (blockingCampaigns.length) {
+    showToast(ti('toast_unfollow_blocked_by_campaigns', {
+      type: t('campaign_type_chr'),
+      campaigns: blockingCampaigns.join(', ')
+    }));
+    return;
+  }
   await sb.from('followed_chronicles')
     .delete().eq('user_id', currentUser.id).eq('chronicle_id', id);
   followedChrIds = followedChrIds.filter(i => i !== id);
@@ -241,6 +250,8 @@ async function unfollowChronicle(id) {
   renderChroniclesList();
   showToast(t('toast_chr_unsubscribed'));
 }
+
+
 
 // ══════════════════════════════════════════════════════════════
 // RENDU — LISTE DES CHRONIQUES
