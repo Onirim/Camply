@@ -292,6 +292,10 @@
   font-size: 11px; color: var(--text3);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+  .campaign-item-type-map {
+    background: rgba(68,170,119,0.12); color: var(--mov);
+    border: 1px solid rgba(68,170,119,0.25);
+  }
 
 /* Compteur de sélection */
 .campaign-selection-summary {
