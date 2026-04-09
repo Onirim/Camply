@@ -272,7 +272,7 @@ async function saveCampaignItemsToDB(campaignId) {
     ...([...campaignSelection.char].map(c => `char:${c}`)),
     ...([...campaignSelection.chr ].map(c => `chr:${c}`)),
     ...([...campaignSelection.doc ].map(c => `doc:${c}`)),
-    ...([...campaignSelection.doc ].map(c => `map:${c}`)),
+    ...([...campaignSelection.map ].map(c => `map:${c}`)),
   ]);
 
   const toAdd    = [...selectedSet].filter(k => !existingSet.has(k));
@@ -418,7 +418,7 @@ function campaignCardHTML(id, c, isFollowed) {
       ${charCount ? `<span class="campaign-count-chip"><span class="n">${charCount}</span> ${t('campaign_type_char')}</span>` : ''}
       ${chrCount  ? `<span class="campaign-count-chip"><span class="n">${chrCount}</span> ${t('campaign_type_chr')}</span>` : ''}
       ${docCount  ? `<span class="campaign-count-chip"><span class="n">${docCount}</span> ${t('campaign_type_doc')}</span>` : ''}
-      ${docCount  ? `<span class="campaign-count-chip"><span class="n">${docCount}</span> ${t('campaign_type_map')}</span>` : ''}
+      ${mapCount  ? `<span class="campaign-count-chip"><span class="n">${mapCount}</span> ${t('campaign_type_map')}</span>` : ''}
       ${!itemCount ? `<span class="campaign-count-chip" style="font-style:italic">${t('campaign_empty_items')}</span>` : ''}
     </div>`;
 
