@@ -406,7 +406,7 @@ function campaignCardHTML(id, c, isFollowed) {
   const charCount = (campaignItems[id] || []).filter(i => i.item_type === 'char').length;
   const chrCount  = (campaignItems[id] || []).filter(i => i.item_type === 'chr').length;
   const docCount  = (campaignItems[id] || []).filter(i => i.item_type === 'doc').length;
-  const docCount  = (campaignItems[id] || []).filter(i => i.item_type === 'map').length;
+  const mapCount  = (campaignItems[id] || []).filter(i => i.item_type === 'map').length;
 
   const desc = c.description
     ? (c.description.length > 200 ? c.description.slice(0, 200) + '…' : c.description)
