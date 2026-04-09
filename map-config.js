@@ -1,61 +1,105 @@
 // ══════════════════════════════════════════════════════════════
-// Camply — Configuration de la Carte
+// Camply — Configuration des Cartes (multi-cartes)
 // Adaptez ce fichier selon votre projet.
 // ══════════════════════════════════════════════════════════════
 
 const MAP_CONFIG = {
 
-  // ── Image de la carte ─────────────────────────────────────
-  // Chemin relatif depuis la racine du site, ou URL absolue.
-  // L'image doit être hébergée sur votre serveur (ou CDN).
-  image: '/Camply/pictures/map.png',            // ← MODIFIEZ ICI
-
-  // Dimensions natives de l'image source (en pixels)
-  // Indispensable pour un positionnement précis des marqueurs.
-  imageWidth:  4095,             // ← MODIFIEZ ICI
-  imageHeight: 4095,             // ← MODIFIEZ ICI
+  // ── Cartes disponibles (1 à 5) ────────────────────────────
+  // Chaque carte a une clé unique (key), un nom affiché (name),
+  // le chemin de son image et ses dimensions natives en pixels.
+  //
+  // ⚠️  La clé 'default' est réservée pour les données
+  //     existantes migrées depuis la version mono-carte.
+  //     Si vous aviez déjà des marqueurs, gardez une entrée
+  //     avec key: 'default' comme première carte.
+  maps: [
+    {
+      key:         'default',              // ← identifiant unique, ne pas changer si données existantes
+      name:        'Carte principale',     // ← nom affiché dans le sélecteur
+      image:       '/Camply/pictures/map.png',
+      imageWidth:  4095,
+      imageHeight: 4095,
+    },
+    // Décommentez et remplissez pour ajouter d'autres cartes :
+    // {
+    //   key:         'city',
+    //   name:        'Plan de la Cité',
+    //   image:       '/Camply/pictures/city.png',
+    //   imageWidth:  3000,
+    //   imageHeight: 2000,
+    // },
+    // {
+    //   key:         'dungeon',
+    //   name:        'Donjon',
+    //   image:       '/Camply/pictures/dungeon.png',
+    //   imageWidth:  2048,
+    //   imageHeight: 2048,
+    // },
+    // {
+    //   key:         'region',
+    //   name:        'Région Nord',
+    //   image:       '/Camply/pictures/region.png',
+    //   imageWidth:  4096,
+    //   imageHeight: 3000,
+    // },
+    // {
+    //   key:         'sea',
+    //   name:        'Carte Marine',
+    //   image:       '/Camply/pictures/sea.png',
+    //   imageWidth:  5000,
+    //   imageHeight: 3500,
+    // },
+  ],
 
   // ── Comportement du zoom ──────────────────────────────────
-  zoomMin:  0.15,   // zoom minimum (vue éloignée)
-  zoomMax:  4.0,    // zoom maximum (vue rapprochée)
-  zoomStep: 0.15,   // incrément par clic sur les boutons +/−
+  zoomMin:     0.15,
+  zoomMax:     4.0,
+  zoomStep:    0.15,
   zoomInitial: 'fit', // 'fit' = ajuste à la fenêtre, ou nombre (ex: 0.5)
 
   // ── Apparence des marqueurs ───────────────────────────────
-  markerSize: 28,          // diamètre du marqueur en px (taille visuelle fixe)
+  markerSize: 28,
   markerColors: [
-    '#e05c5c',   // rouge
-    '#e07a3a',   // orange
-    '#e8c46a',   // jaune
-    '#5cbf7a',   // vert
-    '#5c9be0',   // bleu
-    '#9b7de8',   // violet
-    '#e05c9b',   // rose
-    '#5cbfbf',   // cyan
+    '#e05c5c',
+    '#e07a3a',
+    '#e8c46a',
+    '#5cbf7a',
+    '#5c9be0',
+    '#9b7de8',
+    '#e05c9b',
+    '#5cbfbf',
   ],
 
-  // ── Textes de l'interface (i18n simple) ──────────────────
-  // Ces chaînes ne passent PAS par le moteur i18n.js ;
-  // dupliquez le bloc si vous souhaitez un support FR/EN.
+  // ── Textes de l'interface ─────────────────────────────────
   labels: {
-    tabName:           'Carte',
-    addMarkerHint:     'Maj+clic gauche pour ajouter un marqueur',
-    markerModalTitle:  'Nouveau marqueur',
-    editModalTitle:    'Modifier le marqueur',
-    fieldName:         'Nom',
-    fieldDesc:         'Description',
-    fieldColor:        'Couleur',
-    namePlaceholder:   'Ex : Taverne du Dragon d\'Or',
-    descPlaceholder:   'Notes, description du lieu…',
-    btnSave:           'Enregistrer',
-    btnCancel:         'Annuler',
-    btnDelete:         'Supprimer',
-    confirmDelete:     'Supprimer ce marqueur ?',
-    toastAdded:        'Marqueur ajouté !',
-    toastSaved:        'Marqueur sauvegardé !',
-    toastDeleted:      'Marqueur supprimé.',
-    toastError:        'Erreur lors de la sauvegarde.',
-    emptyName:         'Veuillez saisir un nom.',
-    imageError:        'Impossible de charger la carte. Vérifiez map-config.js.',
+    tabName:                  'Carte',
+    addMarkerHint:            'Maj+clic gauche pour ajouter un marqueur',
+    markerModalTitle:         'Nouveau marqueur',
+    editModalTitle:           'Modifier le marqueur',
+    fieldName:                'Nom',
+    fieldDesc:                'Description',
+    fieldColor:               'Couleur',
+    namePlaceholder:          'Ex : Taverne du Dragon d\'Or',
+    descPlaceholder:          'Notes, description du lieu…',
+    btnSave:                  'Enregistrer',
+    btnCancel:                'Annuler',
+    btnDelete:                'Supprimer',
+    confirmDelete:            'Supprimer ce marqueur ?',
+    toastAdded:               'Marqueur ajouté !',
+    toastSaved:               'Marqueur sauvegardé !',
+    toastDeleted:             'Marqueur supprimé.',
+    toastError:               'Erreur lors de la sauvegarde.',
+    emptyName:                'Veuillez saisir un nom.',
+    imageError:               'Impossible de charger la carte. Vérifiez map-config.js.',
+    toastLayerNotFound:       'Couche introuvable ou non publique.',
+    toastLayerOwn:            'C\'est votre propre couche de carte !',
+    toastLayerAlreadyFollowed:'Vous suivez déjà cette couche.',
+    toastLayerUnsubscribed:   'Abonnement à la couche supprimé.',
+    toastLayerSubscribed:     'Abonné à "${title}" !',
+    layerPanelTitle:          'Partage',
+    ownLayerSection:          'Ma couche',
+    followedLayerSection:     'Couches suivies',
+    mapSelectorLabel:         'Carte',
   },
 };

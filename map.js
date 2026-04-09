@@ -1,14 +1,13 @@
 // ══════════════════════════════════════════════════════════════
-// Camply — Module Carte v2
-// Carte zoomable + pannable, marqueurs personnels + suivis.
-// Partage via couche (map_layer), intégration campagnes.
+// Camply — Module Carte v3 (multi-cartes)
 // Dépend de : supabase-client.js, map-config.js, scripts.js
 // ══════════════════════════════════════════════════════════════
 
 // ── État ──────────────────────────────────────────────────────
-let mapMarkers        = {};   // id → marker (own)
-let mapFollowedLayers = {};   // layerId → { layer, markers: {} }
-let mapOwnLayer       = null; // { id, title, description, is_public, share_code } | null
+let currentMapKey     = null; // clé de la carte affichée
+let mapMarkers        = {};   // id → marker (propres, carte courante seulement)
+let mapFollowedLayers = {};   // layerId → { layer, markers: {id→marker} }
+let mapOwnLayers      = {};   // map_key → layer
 let mapFollowedIds    = [];   // [layerId, ...]
 let mapLoaded         = false;
 
@@ -21,38 +20,138 @@ let mapDrag = { active: false, startX: 0, startY: 0, originX: 0, originY: 0, mov
 // Popup ouverte : { id, owned } | null
 let mapOpenPopup = null;
 
-// Modale marqueur : { mode: 'add'|'edit', x?, y?, id? } | null
+// Modale marqueur
 let mapModalCtx   = null;
 let mapModalColor = MAP_CONFIG.markerColors[0];
 
-// ── Références DOM ─────────────────────────────────────────────
+// Références DOM
 let _mapViewport = null;
 let _mapCanvas   = null;
 let _mapImage    = null;
+
+// ── Helpers config ────────────────────────────────────────────
+
+/** Retourne la config de la carte actuellement affichée. */
+function _getCurrentMapConfig() {
+  const maps = MAP_CONFIG.maps || [];
+  return maps.find(m => m.key === currentMapKey) || maps[0] || null;
+}
+
+/** Retourne la couche (layer) de l'utilisateur pour la carte courante. */
+function _ownLayer() {
+  return mapOwnLayers[currentMapKey] || null;
+}
 
 // ══════════════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════════════
 
 async function initMap() {
-  if (mapLoaded) return;
+  const maps = MAP_CONFIG.maps || [];
+  if (!maps.length) return;
+
   _mapViewport = document.getElementById('map-viewport');
   _mapCanvas   = document.getElementById('map-canvas');
+
+  if (mapLoaded) return; // déjà initialisé, les événements sont en place
+
+  if (!currentMapKey) currentMapKey = maps[0].key;
+
+  _buildMapSelector();
   _buildMapImage();
   _bindMapEvents();
+
   await Promise.all([
     loadMapMarkersFromDB(),
-    loadOwnLayerFromDB(),
+    loadAllOwnLayersFromDB(),
     loadFollowedLayersFromDB(),
   ]);
+
   _renderLayerPanel();
   mapLoaded = true;
 }
 
+// ── Sélecteur de carte ────────────────────────────────────────
+
+function _buildMapSelector() {
+  const maps = MAP_CONFIG.maps || [];
+  if (maps.length <= 1) return; // pas de sélecteur pour une seule carte
+
+  const toolbar = document.querySelector('.map-toolbar');
+  if (!toolbar || document.getElementById('map-selector')) return;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'map-selector-wrap';
+
+  const lbl = document.createElement('span');
+  lbl.className = 'map-selector-label';
+  lbl.textContent = MAP_CONFIG.labels.mapSelectorLabel || 'Carte';
+  wrap.appendChild(lbl);
+
+  const sel = document.createElement('select');
+  sel.id = 'map-selector';
+  sel.className = 'map-selector';
+  maps.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m.key;
+    opt.textContent = m.name;
+    if (m.key === currentMapKey) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  sel.addEventListener('change', () => switchMap(sel.value));
+
+  wrap.appendChild(sel);
+  toolbar.insertBefore(wrap, toolbar.firstChild);
+}
+
+/** Bascule vers une autre carte. */
+async function switchMap(key) {
+  if (!key || key === currentMapKey) return;
+  currentMapKey = key;
+
+  // Synchronise le sélecteur
+  const sel = document.getElementById('map-selector');
+  if (sel) sel.value = key;
+
+  // Efface l'image et les marqueurs actuels
+  _closePopup();
+  _mapCanvas.querySelectorAll('.map-marker').forEach(el => el.remove());
+  const oldImg = _mapCanvas.querySelector('img.map-image');
+  if (oldImg) oldImg.remove();
+  const oldErr = _mapCanvas.querySelector('.map-image-error');
+  if (oldErr) oldErr.remove();
+  _mapImage = null;
+
+  // Construit la nouvelle image
+  _buildMapImage();
+
+  // Recharge les marqueurs propres pour la nouvelle carte
+  await loadMapMarkersFromDB();
+
+  // Ré-affiche les marqueurs suivis (filtrés par la nouvelle carte)
+  Object.values(mapFollowedLayers).forEach(({ layer, markers }) => {
+    if (layer.map_key !== currentMapKey) return;
+    Object.values(markers)
+      .filter(m => m.map_key === currentMapKey)
+      .forEach(m => _renderMarker(m, false));
+  });
+
+  // Ré-affiche les marqueurs propres
+  Object.values(mapMarkers).forEach(m => _renderMarker(m, true));
+  _updateMarkerCount();
+
+  _renderLayerPanel();
+}
+
+// ── Construction de l'image ───────────────────────────────────
+
 function _buildMapImage() {
+  const cfg = _getCurrentMapConfig();
+  if (!cfg) return;
+
   const img = document.createElement('img');
   img.id = 'map-image'; img.className = 'map-image';
-  img.alt = 'Carte'; img.draggable = false;
+  img.alt = cfg.name || 'Carte'; img.draggable = false;
   img.onload = () => {
     _mapImage = img;
     _setInitialTransform();
@@ -64,10 +163,10 @@ function _buildMapImage() {
     err.className = 'map-image-error';
     err.innerHTML = `<div class="icon">🗺️</div>
       <strong>${MAP_CONFIG.labels.imageError}</strong>
-      <code>${MAP_CONFIG.image}</code>`;
+      <code>${cfg.image}</code>`;
     _mapCanvas.appendChild(err);
   };
-  img.src = MAP_CONFIG.image;
+  img.src = cfg.image;
   _mapCanvas.appendChild(img);
 }
 
@@ -76,9 +175,10 @@ function _buildMapImage() {
 // ══════════════════════════════════════════════════════════════
 
 function _setInitialTransform() {
-  if (!_mapViewport || !_mapImage) return;
+  const cfg = _getCurrentMapConfig();
+  if (!_mapViewport || !_mapImage || !cfg) return;
   const vw = _mapViewport.clientWidth, vh = _mapViewport.clientHeight;
-  const iw = MAP_CONFIG.imageWidth,    ih = MAP_CONFIG.imageHeight;
+  const iw = cfg.imageWidth, ih = cfg.imageHeight;
   let scale = MAP_CONFIG.zoomInitial === 'fit'
     ? Math.max(MAP_CONFIG.zoomMin, Math.min(MAP_CONFIG.zoomMax, Math.min(vw / iw, vh / ih) * 0.92))
     : (parseFloat(MAP_CONFIG.zoomInitial) || 1);
@@ -104,10 +204,11 @@ function _updateZoomDisplay() {
 }
 
 function _clampTransform() {
-  if (!_mapImage) return;
+  const cfg = _getCurrentMapConfig();
+  if (!_mapImage || !cfg) return;
   const vw = _mapViewport.clientWidth, vh = _mapViewport.clientHeight;
-  const iw = MAP_CONFIG.imageWidth * mapTransform.scale;
-  const ih = MAP_CONFIG.imageHeight * mapTransform.scale;
+  const iw = cfg.imageWidth * mapTransform.scale;
+  const ih = cfg.imageHeight * mapTransform.scale;
   const m = 60;
   mapTransform.x = Math.min(vw - m, Math.max(m - iw, mapTransform.x));
   mapTransform.y = Math.min(vh - m, Math.max(m - ih, mapTransform.y));
@@ -126,6 +227,21 @@ function mapZoomIn()    { const c = _vc(); _zoomAt(c.x, c.y, mapTransform.scale 
 function mapZoomOut()   { const c = _vc(); _zoomAt(c.x, c.y, mapTransform.scale - MAP_CONFIG.zoomStep); }
 function mapZoomReset() { _setInitialTransform(); _updateZoomDisplay(); _closePopup(); }
 function _vc()          { return { x: _mapViewport.clientWidth / 2, y: _mapViewport.clientHeight / 2 }; }
+
+// viewport px → position relative image [0,1]
+function _v2m(cx, cy) {
+  const cfg = _getCurrentMapConfig();
+  const r = _mapViewport.getBoundingClientRect();
+  return {
+    x: (cx - r.left - mapTransform.x) / mapTransform.scale / cfg.imageWidth,
+    y: (cy - r.top  - mapTransform.y) / mapTransform.scale / cfg.imageHeight,
+  };
+}
+// position relative [0,1] → coordonnées canvas px
+function _m2c(rx, ry) {
+  const cfg = _getCurrentMapConfig();
+  return { x: rx * cfg.imageWidth, y: ry * cfg.imageHeight };
+}
 
 // ══════════════════════════════════════════════════════════════
 // EVENTS
@@ -210,28 +326,17 @@ function _pinchDist(e) {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-// viewport px → position relative image [0,1]
-function _v2m(cx, cy) {
-  const r = _mapViewport.getBoundingClientRect();
-  return {
-    x: (cx - r.left - mapTransform.x) / mapTransform.scale / MAP_CONFIG.imageWidth,
-    y: (cy - r.top  - mapTransform.y) / mapTransform.scale / MAP_CONFIG.imageHeight,
-  };
-}
-// position relative [0,1] → coordonnées canvas px
-function _m2c(rx, ry) {
-  return { x: rx * MAP_CONFIG.imageWidth, y: ry * MAP_CONFIG.imageHeight };
-}
-
 // ══════════════════════════════════════════════════════════════
 // DB — MARQUEURS PROPRES
 // ══════════════════════════════════════════════════════════════
 
+/** Charge les marqueurs de l'utilisateur pour la carte courante uniquement. */
 async function loadMapMarkersFromDB() {
   if (!currentUser) return;
   const { data, error } = await sb.from('map_markers')
-    .select('id, x, y, name, description, color')
+    .select('id, x, y, name, description, color, map_key')
     .eq('user_id', currentUser.id)
+    .eq('map_key', currentMapKey)
     .order('created_at', { ascending: true });
   if (error) { console.error('Erreur marqueurs:', error); return; }
   mapMarkers = {};
@@ -241,8 +346,8 @@ async function loadMapMarkersFromDB() {
 async function _saveMarkerToDB(payload, ctx) {
   if (ctx.mode === 'add') {
     const { data, error } = await sb.from('map_markers')
-      .insert({ ...payload, user_id: currentUser.id })
-      .select('id, x, y, name, description, color').single();
+      .insert({ ...payload, user_id: currentUser.id, map_key: currentMapKey })
+      .select('id, x, y, name, description, color, map_key').single();
     if (error) { showToast(MAP_CONFIG.labels.toastError); return; }
     mapMarkers[data.id] = data;
     _renderMarker(data, true);
@@ -251,7 +356,7 @@ async function _saveMarkerToDB(payload, ctx) {
   } else {
     const { data, error } = await sb.from('map_markers')
       .update(payload).eq('id', ctx.id)
-      .select('id, x, y, name, description, color').single();
+      .select('id, x, y, name, description, color, map_key').single();
     if (error) { showToast(MAP_CONFIG.labels.toastError); return; }
     mapMarkers[data.id] = data;
     _refreshMarkerDOM(data);
@@ -271,15 +376,17 @@ async function deleteMapMarker(id) {
 }
 
 // ══════════════════════════════════════════════════════════════
-// DB — COUCHE PROPRE (map_layer)
+// DB — COUCHES PROPRES (une par carte)
 // ══════════════════════════════════════════════════════════════
 
-async function loadOwnLayerFromDB() {
+/** Charge toutes les couches propres (toutes cartes confondues). */
+async function loadAllOwnLayersFromDB() {
   if (!currentUser) return;
   const { data } = await sb.from('map_layers')
-    .select('id, title, description, is_public, share_code')
-    .eq('user_id', currentUser.id).maybeSingle();
-  mapOwnLayer = data || null;
+    .select('id, title, description, is_public, share_code, map_key')
+    .eq('user_id', currentUser.id);
+  mapOwnLayers = {};
+  (data || []).forEach(l => { mapOwnLayers[l.map_key] = l; });
 }
 
 async function saveOwnLayerToDB() {
@@ -288,18 +395,19 @@ async function saveOwnLayerToDB() {
   const pub    = document.getElementById('map-layer-public')?.checked      || false;
   const payload = { title, description: desc, is_public: pub };
 
-  if (mapOwnLayer?.id) {
+  const layer = _ownLayer();
+  if (layer?.id) {
     const { data, error } = await sb.from('map_layers')
-      .update(payload).eq('id', mapOwnLayer.id)
-      .select('id, title, description, is_public, share_code').single();
+      .update(payload).eq('id', layer.id)
+      .select('id, title, description, is_public, share_code, map_key').single();
     if (error) { showToast(MAP_CONFIG.labels.toastError); return; }
-    mapOwnLayer = data;
+    mapOwnLayers[data.map_key] = data;
   } else {
     const { data, error } = await sb.from('map_layers')
-      .insert({ ...payload, user_id: currentUser.id })
-      .select('id, title, description, is_public, share_code').single();
+      .insert({ ...payload, user_id: currentUser.id, map_key: currentMapKey })
+      .select('id, title, description, is_public, share_code, map_key').single();
     if (error) { showToast(MAP_CONFIG.labels.toastError); return; }
-    mapOwnLayer = data;
+    mapOwnLayers[data.map_key] = data;
   }
   _renderLayerPanel();
   showToast(MAP_CONFIG.labels.toastSaved);
@@ -317,7 +425,7 @@ async function loadFollowedLayersFromDB() {
   if (!mapFollowedIds.length) { mapFollowedLayers = {}; return; }
 
   const { data: layers } = await sb.from('map_layers')
-    .select('id, title, description, is_public, share_code, user_id')
+    .select('id, title, description, is_public, share_code, user_id, map_key')
     .in('id', mapFollowedIds).eq('is_public', true);
 
   const ownerIds = [...new Set((layers || []).map(l => l.user_id))];
@@ -329,8 +437,9 @@ async function loadFollowedLayersFromDB() {
 
   mapFollowedLayers = {};
   for (const layer of (layers || [])) {
+    // Charge tous les marqueurs du propriétaire (toutes cartes) pour ne pas refaire des requêtes au switch
     const { data: markers } = await sb.from('map_markers')
-      .select('id, x, y, name, description, color').eq('user_id', layer.user_id);
+      .select('id, x, y, name, description, color, map_key').eq('user_id', layer.user_id);
     mapFollowedLayers[layer.id] = {
       layer: { ...layer, _owner_name: ownerMap[layer.user_id] || '?' },
       markers: Object.fromEntries((markers || []).map(m => [m.id, m])),
@@ -342,11 +451,11 @@ async function followMapLayerByCode(code) {
   if (!code.trim()) return;
   const clean = code.trim().toUpperCase();
   const { data, error } = await sb.from('map_layers')
-    .select('id, title, user_id, is_public')
+    .select('id, title, user_id, is_public, map_key')
     .eq('share_code', clean).eq('is_public', true).single();
-  if (error || !data) { showToast(MAP_CONFIG.labels.toastLayerNotFound || 'Couche introuvable.'); return; }
-  if (data.user_id === currentUser.id) { showToast(MAP_CONFIG.labels.toastLayerOwn || 'C\'est votre propre couche !'); return; }
-  if (mapFollowedIds.includes(data.id)) { showToast(MAP_CONFIG.labels.toastLayerAlreadyFollowed || 'Déjà abonné.'); return; }
+  if (error || !data) { showToast(MAP_CONFIG.labels.toastLayerNotFound); return; }
+  if (data.user_id === currentUser.id) { showToast(MAP_CONFIG.labels.toastLayerOwn); return; }
+  if (mapFollowedIds.includes(data.id)) { showToast(MAP_CONFIG.labels.toastLayerAlreadyFollowed); return; }
 
   const { error: err } = await sb.from('followed_map_layers')
     .insert({ user_id: currentUser.id, layer_id: data.id });
@@ -354,17 +463,22 @@ async function followMapLayerByCode(code) {
 
   mapFollowedIds.push(data.id);
   await loadFollowedLayersFromDB();
-  _renderAllMarkers();
+
+  // Si la couche correspond à une autre carte, basculer dessus
+  if (data.map_key && data.map_key !== currentMapKey) {
+    await switchMap(data.map_key);
+  } else {
+    _renderAllMarkers();
+  }
+
   _renderLayerPanel();
   document.getElementById('map-follow-input').value = '';
-  const msg = (MAP_CONFIG.labels.toastLayerSubscribed || 'Abonné à "${title}" !')
-    .replace('${title}', data.title || clean);
+  const msg = MAP_CONFIG.labels.toastLayerSubscribed.replace('${title}', data.title || clean);
   showToast(msg);
 }
 
 async function unfollowMapLayer(layerId) {
   const layer = mapFollowedLayers[layerId]?.layer;
-  // Vérifie les campagnes bloquantes
   if (layer?.share_code && typeof getFollowedCampaignTitlesByItem === 'function') {
     const blocking = await getFollowedCampaignTitlesByItem('map', layer.share_code);
     if (blocking.length) {
@@ -378,7 +492,7 @@ async function unfollowMapLayer(layerId) {
   delete mapFollowedLayers[layerId];
   _renderAllMarkers();
   _renderLayerPanel();
-  showToast(MAP_CONFIG.labels.toastLayerUnsubscribed || 'Abonnement supprimé.');
+  showToast(MAP_CONFIG.labels.toastLayerUnsubscribed);
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -388,11 +502,16 @@ async function unfollowMapLayer(layerId) {
 function _renderAllMarkers() {
   if (!_mapCanvas) return;
   _mapCanvas.querySelectorAll('.map-marker').forEach(el => el.remove());
-  // Couches suivies en dessous
-  Object.values(mapFollowedLayers).forEach(({ markers }) => {
-    Object.values(markers).forEach(m => _renderMarker(m, false));
+
+  // Couches suivies en dessous : seulement celles de la carte courante
+  Object.values(mapFollowedLayers).forEach(({ layer, markers }) => {
+    if (layer.map_key !== currentMapKey) return;
+    Object.values(markers)
+      .filter(m => m.map_key === currentMapKey)
+      .forEach(m => _renderMarker(m, false));
   });
-  // Marqueurs propres par-dessus
+
+  // Marqueurs propres par-dessus (déjà filtrés par loadMapMarkersFromDB)
   Object.values(mapMarkers).forEach(m => _renderMarker(m, true));
   _updateMarkerCount();
 }
@@ -410,10 +529,9 @@ function _renderMarker(m, owned) {
   el.style.top       = cy + 'px';
   el.style.transform = `translate(-50%, -100%) scale(${inv})`;
 
-  const opacity = owned ? '0.92' : '0.65';
+  const opacity  = owned ? '0.92' : '0.65';
   const innerDot = !owned
-    ? `<circle cx="14" cy="14" r="2.5" fill="${m.color}" opacity="0.7"/>`
-    : '';
+    ? `<circle cx="14" cy="14" r="2.5" fill="${m.color}" opacity="0.7"/>` : '';
 
   el.innerHTML = `
     <svg class="map-marker-pin"
@@ -438,7 +556,7 @@ function _renderMarker(m, owned) {
 function _refreshMarkerDOM(m) {
   const el = document.getElementById('marker-' + m.id);
   if (!el) { _renderMarker(m, true); return; }
-  const path   = el.querySelector('path');
+  const path = el.querySelector('path');
   if (path) path.setAttribute('fill', m.color);
   const label = el.querySelector('.map-marker-label');
   if (label) label.textContent = m.name;
@@ -449,7 +567,9 @@ function _updateMarkerCount() {
   if (!el) return;
   const own      = Object.keys(mapMarkers).length;
   const followed = Object.values(mapFollowedLayers)
-    .reduce((acc, { markers }) => acc + Object.keys(markers).length, 0);
+    .filter(({ layer }) => layer.map_key === currentMapKey)
+    .reduce((acc, { markers }) =>
+      acc + Object.values(markers).filter(m => m.map_key === currentMapKey).length, 0);
   const total = own + followed;
   el.innerHTML = `<span>${total}</span> marqueur${total !== 1 ? 's' : ''}`;
 }
@@ -523,7 +643,7 @@ function _repositionPopupOn(markerId, popup) {
   const vx = cx * mapTransform.scale + mapTransform.x;
   const vy = cy * mapTransform.scale + mapTransform.y;
   const pw = popup.offsetWidth || 240, ph = popup.offsetHeight || 120;
-  const vw = _mapViewport.clientWidth,  vh = _mapViewport.clientHeight;
+  const vw = _mapViewport.clientWidth, vh = _mapViewport.clientHeight;
   let left = vx - pw / 2;
   let top  = vy - MAP_CONFIG.markerSize / mapTransform.scale * 1.4 - ph - 8;
   if (left < 8)       left = 8;
@@ -607,9 +727,10 @@ function _renderLayerPanel() {
   const panel = document.getElementById('map-layer-panel');
   if (!panel) return;
 
-  const layer    = mapOwnLayer;
+  const layer    = _ownLayer();
   const isPublic = layer?.is_public || false;
   const code     = layer?.share_code || null;
+  const cfg      = _getCurrentMapConfig();
 
   const shareCodeHtml = isPublic && code ? `
     <div class="map-share-code-box">
@@ -624,8 +745,12 @@ function _renderLayerPanel() {
       </button>
     </div>` : '';
 
-  const followedHtml = Object.values(mapFollowedLayers).length
-    ? Object.values(mapFollowedLayers).map(({ layer: l }) => `
+  // Ne montre que les couches suivies pour la carte courante
+  const followedForThisMap = Object.values(mapFollowedLayers)
+    .filter(({ layer: l }) => l.map_key === currentMapKey);
+
+  const followedHtml = followedForThisMap.length
+    ? followedForThisMap.map(({ layer: l }) => `
         <div class="map-followed-row">
           <div class="map-followed-dot"></div>
           <div class="map-followed-info">
@@ -641,13 +766,16 @@ function _renderLayerPanel() {
             </svg>
           </button>
         </div>`).join('')
-    : `<div class="map-followed-empty">Aucune couche suivie.</div>`;
+    : `<div class="map-followed-empty">Aucune couche suivie pour cette carte.</div>`;
 
   panel.innerHTML = `
     <div class="map-panel-inner">
 
       <div class="map-panel-section">
-        <div class="map-panel-title">Ma couche</div>
+        <div class="map-panel-title">
+          Ma couche
+          ${cfg ? `<span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text3)"> — ${esc(cfg.name)}</span>` : ''}
+        </div>
         <div class="map-panel-field">
           <label>Titre</label>
           <input type="text" id="map-layer-title"
@@ -677,7 +805,9 @@ function _renderLayerPanel() {
       </div>
 
       <div class="map-panel-section">
-        <div class="map-panel-title">Couches suivies</div>
+        <div class="map-panel-title">Couches suivies
+          ${cfg ? `<span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text3)"> — ${esc(cfg.name)}</span>` : ''}
+        </div>
         <div class="map-follow-input-wrap">
           <input type="text" id="map-follow-input"
             placeholder="Code de partage (8 car.)"
@@ -715,48 +845,36 @@ function toggleMapPanel() {
 
 // ══════════════════════════════════════════════════════════════
 // INTÉGRATION CAMPAGNES
-// buildSelectableList('map') est appelé par campaigns.js.
-// navigateToCampaignItem('map', code) ouvre simplement la carte.
 // ══════════════════════════════════════════════════════════════
 
-// Patch de buildSelectableList pour le type 'map'
-// On surcharge après que la fonction originale a été définie.
-document.addEventListener('DOMContentLoaded', () => {
-  const _orig = window.buildSelectableList;
-  window.buildSelectableList = function(type) {
-    if (type !== 'map') return _orig ? _orig(type) : [];
-    const items = [];
-    if (mapOwnLayer?.share_code && mapOwnLayer?.is_public) {
-      items.push({
-        code: mapOwnLayer.share_code,
-        name: mapOwnLayer.title || 'Ma carte',
-        sub:  mapOwnLayer.description || '',
-        owner: null,
-      });
-    }
-    Object.values(mapFollowedLayers).forEach(({ layer: l }) => {
-      if (l.share_code && l.is_public) {
-        items.push({ code: l.share_code, name: l.title || l.share_code, sub: '', owner: l._owner_name });
-      }
-    });
-    return items;
-  };
-});
-
-function navigateToMap(shareCode) {
+/** Navigation depuis une campagne : bascule sur la bonne carte. */
+async function navigateToMap(shareCode) {
   showView('map');
+
+  // Cherche la carte correspondant au share_code
+  let targetMapKey = null;
+
+  for (const [key, layer] of Object.entries(mapOwnLayers || {})) {
+    if (layer?.share_code === shareCode) { targetMapKey = key; break; }
+  }
+  if (!targetMapKey) {
+    for (const { layer: l } of Object.values(mapFollowedLayers || {})) {
+      if (l?.share_code === shareCode) { targetMapKey = l.map_key; break; }
+    }
+  }
+
+  if (targetMapKey && targetMapKey !== currentMapKey) {
+    await switchMap(targetMapKey);
+  }
+
   return true;
 }
 
-// ══════════════════════════════════════════════════════════════
-// SYNC CAMPAGNES — abonnement automatique aux couches d'une
-// campagne suivie (appelé depuis campaigns.js)
-// ══════════════════════════════════════════════════════════════
-
+/** Sync campagnes : abonnement automatique aux couches reçues via campagne. */
 async function syncFollowedMapLayers(shareCodes) {
   if (!shareCodes || !shareCodes.length) return 0;
   const { data: layerRows } = await sb.from('map_layers')
-    .select('id, title, user_id, is_public, share_code')
+    .select('id, title, user_id, is_public, share_code, map_key')
     .in('share_code', shareCodes).eq('is_public', true);
   let added = 0;
   for (const row of (layerRows || [])) {
@@ -773,3 +891,40 @@ async function syncFollowedMapLayers(shareCodes) {
   }
   return added;
 }
+
+// Patch de buildSelectableList pour le type 'map' (multi-cartes)
+document.addEventListener('DOMContentLoaded', () => {
+  const _orig = window.buildSelectableList;
+  window.buildSelectableList = function(type) {
+    if (type !== 'map') return _orig ? _orig(type) : [];
+
+    const items = [];
+    const maps  = MAP_CONFIG.maps || [];
+
+    // Couches propres (toutes cartes)
+    Object.entries(mapOwnLayers || {}).forEach(([mapKey, layer]) => {
+      if (!layer?.share_code || !layer?.is_public) return;
+      const mapCfg = maps.find(m => m.key === mapKey);
+      items.push({
+        code:  layer.share_code,
+        name:  layer.title || mapCfg?.name || mapKey,
+        sub:   mapCfg?.name || '',
+        owner: null,
+      });
+    });
+
+    // Couches suivies (toutes cartes)
+    Object.values(mapFollowedLayers || {}).forEach(({ layer: l }) => {
+      if (!l?.share_code || !l?.is_public) return;
+      const mapCfg = maps.find(m => m.key === l.map_key);
+      items.push({
+        code:  l.share_code,
+        name:  l.title || mapCfg?.name || l.map_key,
+        sub:   mapCfg?.name || '',
+        owner: l._owner_name,
+      });
+    });
+
+    return items;
+  };
+});
