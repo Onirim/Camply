@@ -21,7 +21,7 @@ const MAP_CONFIG = {
       imageWidth:  4095,
       imageHeight: 4095,
     },
-    Décommentez et remplissez pour ajouter d'autres cartes :
+    // Décommentez et remplissez pour ajouter d'autres cartes :
     {
       key:         'city',
       name:        'Greybloom Fair',
