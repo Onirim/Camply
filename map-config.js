@@ -8,7 +8,7 @@ const MAP_CONFIG = {
   // ── Image de la carte ─────────────────────────────────────
   // Chemin relatif depuis la racine du site, ou URL absolue.
   // L'image doit être hébergée sur votre serveur (ou CDN).
-  image: '/Camply/map.png',            // ← MODIFIEZ ICI
+  image: '/Camply/pictures/map.png',            // ← MODIFIEZ ICI
 
   // Dimensions natives de l'image source (en pixels)
   // Indispensable pour un positionnement précis des marqueurs.
