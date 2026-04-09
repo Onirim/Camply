@@ -14,10 +14,14 @@ This tab allows you to create chronicles. A chronicle is a kind of book where yo
 
 This tab is reserved for single-page documents, which can be quite rich thanks to the Markdown language and navigation management between the different heading levels of the document. As a GM, you can use it to write your scenarios, present important organizations, describe a city, or even magical items that your characters might have acquired.
 
+## Maps Tab
+
+This tab is more tricky: you need to edit the map-config.js file for pointing to your map picture and adjust the map size in pixels. You can do this multiple time for multiple maps. In the Maps Tab, you can create some map pins and description, and you can share the pins to your players.
+
 ## Campaigns Tab
 
-This is where you define which objects (characters, chronicles, and documents) are shared with your players. Share your campaign code with your players once, and they will automatically receive new characters, new chronicles, and new documents that you share with them. An object can be shared across multiple campaigns, and players can also subscribe to multiple campaigns, allowing you to manage multiple player tables at once!
+This is where you define which objects (characters, chronicles, documents and maps) are shared with your players. Share your campaign code with your players once, and they will automatically receive new characters, new chronicles, new documents and new maps that you share with them. An object can be shared across multiple campaigns, and players can also subscribe to multiple campaigns, allowing you to manage multiple player tables at once!
 
 ## Transferring an Object
 
-You can transfer ownership of an object (character, chronicle, document, or campaign) to another user via the user menu in the top right corner.
+You can transfer ownership of an object (character, chronicle, document or campaign) to another user via the user menu in the top right corner.
