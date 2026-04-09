@@ -28,6 +28,7 @@ function freshState() {
     characteristics:       [],     // [{ id, name, trigram, score }]
     skills:                [],     // [{ id, name, score }]
     traits:                [],     // [{ id, name, score, detail }]
+    description:           '',
     background:            '',
   };
 }
@@ -55,16 +56,12 @@ function renderCharCardBody(c) {
   const lvlTag = c.level !== undefined && c.level !== 0 && c.level !== null
     ? `<span class="card-rank">${t('card_level')}${c.level}</span>` : '';
 
-  // Toutes les caractéristiques (pas de limite d'affichage)
-  const chars = (c.characteristics || []);
-  const charsHtml = chars.length
-    ? `<div class="card-char-row">
-        ${chars.map(ch => `
-          <div class="card-char-chip">
-            <div class="card-char-trigram">${esc(ch.trigram || '???')}</div>
-            <div class="card-char-score">${ch.score ?? 0}</div>
-          </div>`).join('')}
-       </div>` : '';
+  // Extrait de la description (tronqué)
+  const rawDescription = String(c.description || '').replace(/\s+/g, ' ').trim();
+  const maxDescriptionLength = 180;
+  const descriptionExcerpt = rawDescription
+    ? rawDescription.slice(0, maxDescriptionLength).trimEnd() + (rawDescription.length > maxDescriptionLength ? '…' : '')
+    : '';
 
   return `
     <div class="card-name">${esc(c.name) || '—'}</div>
@@ -150,6 +147,11 @@ function renderCharSheet(data) {
         </div>`).join('')}
     </div>` : '';
 
+  // ── Description ───────────────────────────────────────────
+  const descriptionHtml = data.description ? `
+    <div class="preview-section-title">${t('section_description')}</div>
+    <div class="background-preview">${esc(data.description)}</div>` : '';
+
   // ── Background ────────────────────────────────────────────
   const bgHtml = data.background ? `
     <div class="preview-section-title">${t('section_background')}</div>
@@ -203,6 +205,9 @@ const GAME_I18N = {
     editor_add_trait:         '+ Ajouter un trait',
 
     // Éditeur — background
+    editor_section_description: 'Description',
+    editor_description_ph:      'Description du personnage, apparence, attitude…',
+    
     editor_section_background: 'Background',
     editor_background_ph:      'Histoire du personnage, origines, motivations…',
 
@@ -242,6 +247,9 @@ const GAME_I18N = {
     editor_trait_detail_ph:   'Description or detail (optional)',
     editor_trait_score_hint:  'Value (optional)',
     editor_add_trait:         '+ Add a trait',
+
+    editor_section_description: 'Description',
+    editor_description_ph:      'Character description, appearance, attitude…',
 
     editor_section_background: 'Background',
     editor_background_ph:      'Character history, origins, motivations…',
