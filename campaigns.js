@@ -131,6 +131,7 @@ async function syncFollowedCampaignItems() {
   const toFollowChr  = [];
   const toFollowDoc  = [];
   const toFollowMap = [];
+  const mapSources = getCampaignMapSources();
  
   for (const item of items) {
     if (item.item_type === 'char') {
@@ -146,8 +147,8 @@ async function syncFollowedCampaignItems() {
       const alreadyFollowed = Object.values(followedDocuments).some(d => d.share_code === item.share_code);
       if (!alreadyOwn && !alreadyFollowed) toFollowDoc.push(item.share_code);
       } else if (item.item_type === 'map') {
-      const alreadyOwn      = Object.values(maps).some(d => d.share_code === item.share_code);
-      const alreadyFollowed = Object.values(followedMaps).some(d => d.share_code === item.share_code);
+      const alreadyOwn      = mapSources.own.some(d => d.share_code === item.share_code);
+      const alreadyFollowed = mapSources.followed.some(d => d.share_code === item.share_code);
       if (!alreadyOwn && !alreadyFollowed) toFollowMap.push(item.share_code);
     }
   }
@@ -489,6 +490,7 @@ function renderCampaignDetail() {
   if (!c) return;
   const isOwn = !!campaigns[activeCampaignId];
   const items = campaignItems[activeCampaignId] || [];
+  const mapSources = getCampaignMapSources();
 
   // Résolution des noms à partir des stores en mémoire
   const resolve = (item) => {
@@ -505,8 +507,8 @@ function renderCampaignDetail() {
                  || Object.values(followedDocuments).find(x => x.share_code === item.share_code);
       return { name: found?.title || item.share_code, sub: '' };
     } else {
-      const found = Object.values(maps).find(x => x.share_code === item.share_code)
-                 || Object.values(followedMaps).find(x => x.share_code === item.share_code);
+      const found = mapSources.own.find(x => x.share_code === item.share_code)
+                 || mapSources.followed.find(x => x.share_code === item.share_code);
       return { name: found?.title || item.share_code, sub: '' };
     }
   };
@@ -704,15 +706,41 @@ function buildSelectableList(type) {
     return [...own, ...followed];
   }
   if (type === 'map') {
-    const own = Object.values(maps)
+    const mapSources = getCampaignMapSources();
+    const own = mapSources.own
       .filter(d => d.share_code && d.is_public)
       .map(d => ({ code: d.share_code, name: d.title, sub: '', owner: null }));
-    const followed = Object.values(followedMaps)
+    const followed = mapSources.followed
       .filter(d => d.share_code && d.is_public)
       .map(d => ({ code: d.share_code, name: d.title, sub: '', owner: d._owner_name || '?' }));
     return [...own, ...followed];
   }
   return [];
+}
+
+function getCampaignMapSources() {
+  const own = [];
+  const followed = [];
+
+  if (typeof maps !== 'undefined') {
+    own.push(...Object.values(maps));
+  }
+  if (typeof followedMaps !== 'undefined') {
+    followed.push(...Object.values(followedMaps));
+  }
+
+  if (typeof mapOwnLayer !== 'undefined' && mapOwnLayer) {
+    own.push(mapOwnLayer);
+  }
+  if (typeof mapFollowedLayers !== 'undefined') {
+    followed.push(
+      ...Object.values(mapFollowedLayers)
+        .map(entry => entry?.layer || entry)
+        .filter(Boolean)
+    );
+  }
+
+  return { own, followed };
 }
 
 function renderSelectableItems() {
