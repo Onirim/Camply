@@ -33,6 +33,13 @@ const TRANSFER_TYPES = () => [
     color: 'var(--accent)',
     hint:  t('transfer_code_hint_campaign'),
   },
+    {
+    value: 'map',
+    label: t('transfer_type_map'),
+    icon:  '🗺️',
+    color: 'var(--mov)',
+    hint:  t('transfer_code_hint_map'),
+  },
 ];
 
 const TRANSFER_ERRORS = () => ({
