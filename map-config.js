@@ -22,13 +22,13 @@ const MAP_CONFIG = {
       imageHeight: 4500,
     },
     // Décommentez et remplissez pour ajouter d'autres cartes :
-    {
-      key:         'city',
-      name:        'Greybloom Fair',
-      image:       '/Camply/pictures/greybloom_fair.png',
-      imageWidth:  4372,
-      imageHeight: 3836,
-    },
+    //{
+    //  key:         'city',
+    //  name:        'City',
+    //  image:       '/Camply/pictures/city.png',
+    //  imageWidth:  4372,
+    //  imageHeight: 3836,
+    //},
     // {
     //   key:         'dungeon',
     //   name:        'Donjon',
