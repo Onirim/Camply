@@ -236,6 +236,7 @@ const TRANSLATIONS = {
     doc_reader_banner:     'Document partagé — lecture seule',
 
     // ── Campagnes ─────────────────────────────────────────────
+    campaign_editor:   'Gestion de campagne',
     campaign_title:    'Campagnes',
     campaign_subtitle: 'Collections de campagne',
     campaign_new_btn:  'Nouvelle campagne',
@@ -498,6 +499,7 @@ const TRANSLATIONS = {
     doc_reader_banner:     'Shared document — read only',
 
     // ── Campaigns ─────────────────────────────────────────────
+    campaign_editor:   'Campaign management',
     campaign_title:    'Campaigns',
     campaign_subtitle: 'Campaign collections',
     campaign_new_btn:  'New campaign',
