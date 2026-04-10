@@ -26,4 +26,4 @@ This is where you define which objects (characters, chronicles, documents and ma
 
 ## Transferring an Object
 
-You can transfer ownership of an object (character, chronicle, document or campaign) to another user via the user menu in the top right corner.
+You can transfer ownership of an object (character, chronicle, document, map pins or campaign) to another user via the user menu in the top right corner.
