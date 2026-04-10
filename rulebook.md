@@ -1,6 +1,8 @@
 # My Game System
 
-In this section, you can present the game system you use to your players, as well as your house rules. For the purposes of this demo, I invite you to explore the features of Camply TTRPG Manager.
+In this section, you can present the game system you use to your players, as well as your house rules. 
+
+**For the purposes of this demo, I invite you to explore the features of Camply TTRPG Manager and follow a small example campaign with the campaign follow code `85E0AEBC`**
 
 ## Characters Tab
 
