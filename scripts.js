@@ -302,7 +302,12 @@ async function onSignedIn(user) {
     loadChroniclesFromDB(),
     loadDocumentsFromDB(),
   ]);
-  await loadCampaignsFromDB();
+  await Promise.all([
+    loadCampaignsFromDB(),
+    (typeof ensureMapLayersCacheLoaded === 'function'
+      ? ensureMapLayersCacheLoaded()
+      : Promise.resolve()),
+  ]);
   document.getElementById('loading-overlay').classList.remove('active');
   isAppReady = true;
   if (!navigateFromHash()) {
