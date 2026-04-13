@@ -328,17 +328,13 @@ async function confirmTransfer() {
       return;
     }
 
-    // Succès : retirer l'objet des stores locaux
-    _removeFromLocalStores(_transferSelectedType, shareCode);
+
 
     closeTransferModal();
+    await _reloadAllDataAfterTransfer();
     showToast(t('transfer_success'));
 
-    // Rafraîchir toutes les vues
-    renderList();
-    renderChroniclesList();
-    renderDocumentsList();
-    renderCampaignsList();
+
 
   } catch (err) {
     _showTransferError(t('transfer_error_network') + ' ' + err.message);
@@ -371,6 +367,27 @@ function _removeFromLocalStores(type, shareCode) {
     const id = Object.keys(campaigns).find(k => campaigns[k].share_code === shareCode);
     if (id) { delete campaigns[id]; delete campaignItems[id]; }
   }
+}
+
+async function _reloadAllDataAfterTransfer() {
+  await Promise.all([
+    (typeof loadCharsFromDB === 'function' ? loadCharsFromDB() : Promise.resolve()),
+    (typeof loadChroniclesFromDB === 'function' ? loadChroniclesFromDB() : Promise.resolve()),
+    (typeof loadDocumentsFromDB === 'function' ? loadDocumentsFromDB() : Promise.resolve()),
+  ]);
+
+  await Promise.all([
+    (typeof loadCampaignsFromDB === 'function' ? loadCampaignsFromDB() : Promise.resolve()),
+    (typeof ensureMapLayersCacheLoaded === 'function' ? ensureMapLayersCacheLoaded() : Promise.resolve()),
+  ]);
+
+  if (typeof renderList === 'function') renderList();
+  if (typeof renderChroniclesList === 'function') renderChroniclesList();
+  if (typeof renderDocumentsList === 'function') renderDocumentsList();
+  if (typeof renderCampaignsList === 'function') renderCampaignsList();
+
+  if (typeof _renderAllMarkers === 'function') _renderAllMarkers();
+  if (typeof _renderLayerPanel === 'function') _renderLayerPanel();
 }
 
 // ══════════════════════════════════════════════════════════════
