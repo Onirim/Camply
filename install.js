@@ -137,8 +137,8 @@ const installAssistant = (() => {
     if (!discordCheck.ok) {
       state.ok = false;
       state.details = { stage: 'discord', discordCheck };
-      setStatus('Discord configuration required.', 'Le provider Discord semble non configuré côté Supabase.', 'Action requise');
-      await renderMarkdown(`${mdRoot}/install-discord.md`, '<p>Active le provider Discord dans Supabase Auth puis réessaye.</p>');
+      setStatus('Discord configuration required.', 'The Discord provider appears to be unconfigured on Supabase\'s side.', 'Action required');
+      await renderMarkdown(`${mdRoot}/install-discord.md`, '<p>Activate the Discord provider in Supabase Auth and then try again.</p>');
       getEl('install-retry-btn').disabled = false;
       state.running = false;
       return false;
