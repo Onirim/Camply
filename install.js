@@ -55,6 +55,21 @@ const installAssistant = (() => {
     }
   }
 
+  async function checkExistingProfiles() {
+    try {
+      const { data, error } = await sb
+        .from('profiles')
+        .select('id')
+        .limit(1);
+
+      if (error) return { ok: false, hasProfiles: false, error };
+
+      return { ok: true, hasProfiles: Array.isArray(data) && data.length > 0 };
+    } catch (error) {
+      return { ok: false, hasProfiles: false, error };
+    }
+  }
+
   async function tryAutoInstallSchema() {
     try {
       const sqlRes = await fetch('sql/00_fresh_install.sql', { cache: 'no-store' });
@@ -111,18 +126,31 @@ const installAssistant = (() => {
     if (state.running) return state.ok;
     state.running = true;
 
+    const results = {
+      supabaseCheck: await checkSupabaseConnectivity(),
+      profilesCheck: null,
+      autoInstall: null,
+      afterInstall: null,
+      discordCheck: null,
+    };
+
+    if (results.supabaseCheck.ok) {
+      results.profilesCheck = await checkExistingProfiles();
+
+      if (results.profilesCheck.ok && results.profilesCheck.hasProfiles) {
+        state.ok = true;
+        state.details = { stage: 'existing_profiles', ...results };
+        hideInstallScreen();
+        state.running = false;
+        return true;
+      }
+    }
+
     showInstallScreen();
     getEl('install-retry-btn').disabled = true;
     getEl('install-open-sql-btn').style.display = 'none';
     setStatus('Installation Assistant', 'Checking the Supabase and Discord configuration…', 'Checking');
     await renderMarkdown(`${mdRoot}/install-schema.md`, '<p>Verification in progress…</p>');
-
-    const results = {
-      supabaseCheck: await checkSupabaseConnectivity(),
-      autoInstall: null,
-      afterInstall: null,
-      discordCheck: null,
-    };
 
     if (!results.supabaseCheck.ok && results.supabaseCheck.reason === 'missing_schema') {
       results.autoInstall = await tryAutoInstallSchema();
