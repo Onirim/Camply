@@ -103,7 +103,7 @@ const installAssistant = (() => {
     showInstallScreen();
     getEl('install-retry-btn').disabled = true;
     getEl('install-open-sql-btn').style.display = 'none';
-    setStatus('Installation Assistant', 'Checking the Supabase and Discord configuration…' 'Checking');
+    setStatus('Installation Assistant', 'Checking the Supabase and Discord configuration…', 'Checking');
     await renderMarkdown(`${mdRoot}/install-schema.md`, '<p>Verification in progress…</p>');
 
     const supabaseCheck = await checkSupabaseConnectivity();
