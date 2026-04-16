@@ -16,37 +16,37 @@ const MAP_CONFIG = {
   maps: [
     {
       key:         'default',              // ← identifiant unique, ne pas changer si données existantes
-      name:        'Galaxy Map',     // ← nom affiché dans le sélecteur
-      image:       '/Camply/pictures/galaxy-regions-pretty.jpg',
-      imageWidth:  4500,
-      imageHeight: 4500,
+      name:        'Default Map',     // ← nom affiché dans le sélecteur
+      image:       './pictures/map.png',
+      imageWidth:  4095,
+      imageHeight: 4095,
     },
     // Décommentez et remplissez pour ajouter d'autres cartes :
     //{
     //  key:         'city',
     //  name:        'City',
-    //  image:       '/Camply/pictures/city.png',
+    //  image:       './pictures/city.png',
     //  imageWidth:  4372,
     //  imageHeight: 3836,
     //},
     // {
     //   key:         'dungeon',
     //   name:        'Donjon',
-    //   image:       '/Camply/pictures/dungeon.png',
+    //   image:       './pictures/dungeon.png',
     //   imageWidth:  2048,
     //   imageHeight: 2048,
     // },
     // {
     //   key:         'region',
     //   name:        'Région Nord',
-    //   image:       '/Camply/pictures/region.png',
+    //   image:       './pictures/region.png',
     //   imageWidth:  4096,
     //   imageHeight: 3000,
     // },
     // {
     //   key:         'sea',
     //   name:        'Carte Marine',
-    //   image:       '/Camply/pictures/sea.png',
+    //   image:       './pictures/sea.png',
     //   imageWidth:  5000,
     //   imageHeight: 3500,
     // },
