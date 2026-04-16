@@ -13,8 +13,5 @@ Camply is unable to communicate with Supabase.
 ![Finding supabase URL and Key](./install/supabase_2.png)
 
 4. On Github, edit the `supabase-client.js` file and enter the `SUPABASE_URL` and `SUPABASE_KEY` retrieved earlier.
-5. In Supabase > Authentication > URL Configuration, add your GitHub Pages URL.
-   
-![Adding Github Pages URL](./install/supabase_3.png)
 
 Then, click on **Retry**.
