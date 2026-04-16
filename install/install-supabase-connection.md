@@ -2,11 +2,19 @@
 
 Camply n'arrive pas à communiquer avec Supabase.
 
-## Vérifications rapides
+## Etapes d'installation
 
-1. Ouvre `supabase-client.js` et vérifie `SUPABASE_URL` et `SUPABASE_KEY`.
-2. Dans Supabase > **Settings > API**, copie la clé **publishable / anon** (pas la service role).
-3. Dans Supabase > **Authentication > URL Configuration**, ajoute l'URL GitHub Pages.
-4. Vérifie la console navigateur (F12) pour un message CORS / réseau.
+1. Inscrivez-vous sur https://supabase.com/, c'est gratuit !
+2. Créez votre organisation, puis votre projet.
+3. Rendez-vous dans le menu de connexion et allez chercher votre URL et votre clé Supabase.
 
-Ensuite, clique sur **Réessayer**.
+![Finding supabase URL and Key](./install/supabase_1.png)
+
+![Finding supabase URL and Key](./install/supabase_2.png)
+
+4. Sur Github, éditez le fichier `supabase-client.js` et entrez le `SUPABASE_URL` et `SUPABASE_KEY` récupérés précédemment.
+5. Dans Supabase > **Authentication > URL Configuration**, ajoutez votre URL GitHub Pages.
+   
+![Adding Github Pages URL](./install/supabase_3.png)
+
+Ensuite, cliquez sur **Réessayer**.
