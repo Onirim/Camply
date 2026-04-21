@@ -534,6 +534,8 @@ function editSharedFollowedChar(id) {
   if (!isAppAdmin()) { showSharedChar(followedChars[id]); return; }
   const shared = followedChars[id];
   if (!shared) return;
+  unreadMarkers.markCharacterRead(id);
+  unreadMarkers.refreshNavBadges({ followedChars, followedDocuments, followedChronicles, chrEntries });
   editChar(id, shared);
 }
 
