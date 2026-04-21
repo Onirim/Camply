@@ -135,10 +135,7 @@ async function saveCharToDB() {
   if (!state.name.trim()) { alert(t('alert_char_no_name')); return; }
   setSaveIndicator('saving', t('save_saving'));
   const isEditingFollowedChar = !!(editingId && followedChars[editingId] && isAppAdmin());
-  const ownerId = (editingId && (chars[editingId]?._owner_id || followedChars[editingId]?._owner_id))
-    || currentUser.id;
   const payload = {
-    user_id:   ownerId,
     name:      state.name.trim(),
     rank:      state.rank,
     is_public: state.is_public || false,
@@ -148,7 +145,7 @@ async function saveCharToDB() {
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(editingId);
   const result = isValidUUID
     ? await sb.from('characters').update(payload).eq('id', editingId).select('id, share_code').single()
-    : await sb.from('characters').insert(payload).select('id, share_code').single();
+    : await sb.from('characters').insert({ ...payload, user_id: currentUser.id }).select('id, share_code').single();
   if (!isValidUUID && editingId) editingId = null;
   if (result.error) {
     setSaveIndicator('error', t('save_error'));
@@ -159,14 +156,14 @@ async function saveCharToDB() {
   state.share_code = result.data.share_code;
   if (!isEditingFollowedChar) {
     await saveCharTagsToDB(editingId);
-    chars[editingId] = { ...state, _db_id: editingId, _owner_id: ownerId };
+    chars[editingId] = { ...state, _db_id: editingId, _owner_id: currentUser.id };
     charTagMap[editingId] = (state.tags || []).map(tg => tg.id);
   } else if (followedChars[editingId]) {
     followedChars[editingId] = {
       ...followedChars[editingId],
       ...state,
       _db_id: editingId,
-      _owner_id: ownerId,
+      _owner_id: followedChars[editingId]._owner_id || null,
       share_code: result.data.share_code,
     };
   }
