@@ -104,11 +104,22 @@ CREATE POLICY "characters_insert"
   ON public.characters FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
--- characters : modification uniquement de ses propres personnages
+-- characters : modification
+--   → propriétaire
+--   → ou utilisateur abonné au personnage via followed_characters
+--     (utilisé pour permettre l'édition depuis le système de partage)
 DROP POLICY IF EXISTS "characters_update" ON public.characters;
 CREATE POLICY "characters_update"
   ON public.characters FOR UPDATE
-  USING (auth.uid() = user_id);
+  USING (
+    auth.uid() = user_id
+    OR EXISTS (
+      SELECT 1
+      FROM public.followed_characters fc
+      WHERE fc.character_id = characters.id
+        AND fc.user_id = auth.uid()
+    )
+  );
 
 -- characters : suppression uniquement de ses propres personnages
 DROP POLICY IF EXISTS "characters_delete" ON public.characters;
