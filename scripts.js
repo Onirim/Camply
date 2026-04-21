@@ -17,6 +17,35 @@ let followedIds      = [];
 let followedTagMap   = {};
 let filterFollowed   = false;
 
+function normalizeDiscordName(name) {
+  return (name || '')
+    .trim()
+    .replace(/^@+/, '')
+    .replace(/#\d+$/, '')
+    .toLowerCase();
+}
+
+function getCurrentDiscordNames() {
+  if (!currentUser) return [];
+  const meta = currentUser.user_metadata || {};
+  const displayedName = meta.full_name
+    || meta.name
+    || meta.username
+    || (currentUser.email ? currentUser.email.split('@')[0] : '');
+  return [displayedName]
+    .map(normalizeDiscordName)
+    .filter(Boolean);
+}
+
+function isAppAdmin() {
+  const admins = (globalThis.APP_CONFIG?.adminDiscordUsers || [])
+    .map(normalizeDiscordName)
+    .filter(Boolean);
+  if (!admins.length) return false;
+  const names = getCurrentDiscordNames();
+  return names.some(n => admins.includes(n));
+}
+
 // ══════════════════════════════════════════════════════════════
 // AUTH
 // ══════════════════════════════════════════════════════════════
@@ -105,8 +134,8 @@ async function loadCharsFromDB() {
 async function saveCharToDB() {
   if (!state.name.trim()) { alert(t('alert_char_no_name')); return; }
   setSaveIndicator('saving', t('save_saving'));
+  const isEditingFollowedChar = !!(editingId && followedChars[editingId] && isAppAdmin());
   const payload = {
-    user_id:   currentUser.id,
     name:      state.name.trim(),
     rank:      state.rank,
     is_public: state.is_public || false,
@@ -116,7 +145,7 @@ async function saveCharToDB() {
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(editingId);
   const result = isValidUUID
     ? await sb.from('characters').update(payload).eq('id', editingId).select('id, share_code').single()
-    : await sb.from('characters').insert(payload).select('id, share_code').single();
+    : await sb.from('characters').insert({ ...payload, user_id: currentUser.id }).select('id, share_code').single();
   if (!isValidUUID && editingId) editingId = null;
   if (result.error) {
     setSaveIndicator('error', t('save_error'));
@@ -125,9 +154,19 @@ async function saveCharToDB() {
   }
   editingId        = result.data.id;
   state.share_code = result.data.share_code;
-  await saveCharTagsToDB(editingId);
-  chars[editingId]    = { ...state, _db_id: editingId };
-  charTagMap[editingId] = (state.tags || []).map(tg => tg.id);
+  if (!isEditingFollowedChar) {
+    await saveCharTagsToDB(editingId);
+    chars[editingId] = { ...state, _db_id: editingId, _owner_id: currentUser.id };
+    charTagMap[editingId] = (state.tags || []).map(tg => tg.id);
+  } else if (followedChars[editingId]) {
+    followedChars[editingId] = {
+      ...followedChars[editingId],
+      ...state,
+      _db_id: editingId,
+      _owner_id: followedChars[editingId]._owner_id || null,
+      share_code: result.data.share_code,
+    };
+  }
   const scBox = document.getElementById('share-code-box');
   const scVal = document.getElementById('share-code-val');
   if (scBox && scVal && state.is_public && state.share_code) {
@@ -208,7 +247,7 @@ async function loadFollowedCharsFromDB() {
     followedChars[row.id] = {
       ...row.data, name: row.name, rank: row.rank,
       is_public: row.is_public, share_code: row.share_code, _db_id: row.id,
-      _followed: true, _owner_name: ownerMap[row.user_id] || '?',
+      _followed: true, _owner_name: ownerMap[row.user_id] || '?', _owner_id: row.user_id,
     };
   });
 }
@@ -441,10 +480,16 @@ function cardHTML(id, c, isFollowed = false) {
   const cardTags = _buildTagChips(id, isFollowed ? followedTagMap : charTagMap);
 
   if (isFollowed) {
+    const canAdminEdit = isAppAdmin();
     const unreadDot = unreadMarkers.cardDotHTML(unreadMarkers.isCharacterUnread(id, false));
-    return `<div class="char-card" onclick="showSharedChar(followedChars['${id}'])">${unreadDot}
+    return `<div class="char-card" onclick="${canAdminEdit ? `editSharedFollowedChar('${id}')` : `showSharedChar(followedChars['${id}'])`}">${unreadDot}
       ${c.illustration_url ? _cardIllus(c) : ''}
       <div class="card-actions">
+        ${canAdminEdit ? `
+        <button class="icon-btn" onclick="event.stopPropagation();editSharedFollowedChar('${id}')"
+          title="${t('btn_edit')}">
+          ${_editIcon()}
+        </button>` : ''}
         <button class="icon-btn" onclick="event.stopPropagation();editFollowedTags('${id}')"
           title="${t('card_manage_tags')}">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -483,6 +528,15 @@ function cardHTML(id, c, isFollowed = false) {
     ${cardTags ? `<div class="card-tags">${cardTags}</div>` : ''}
     ${visTag}
   </div>`;
+}
+
+function editSharedFollowedChar(id) {
+  if (!isAppAdmin()) { showSharedChar(followedChars[id]); return; }
+  const shared = followedChars[id];
+  if (!shared) return;
+  unreadMarkers.markCharacterRead(id);
+  unreadMarkers.refreshNavBadges({ followedChars, followedDocuments, followedChronicles, chrEntries });
+  editChar(id, shared);
 }
 
 // Helpers HTML internes

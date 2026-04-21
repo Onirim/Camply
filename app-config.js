@@ -8,5 +8,8 @@ const APP_CONFIG = {
   // administrateurs de votre Camply.
   // Ces comptes peuvent voir toutes les cartes, même sans couche partagée.
   // Exemples: ['Onirim', 'MJ_Principal']
-  adminDiscordUsers: [],
+  adminDiscordUsers: ['onirim.bzh'],
 };
+
+// Rend la config accessible de façon explicite depuis tous les scripts.
+globalThis.APP_CONFIG = APP_CONFIG;
