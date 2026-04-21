@@ -189,13 +189,6 @@ function _buildMapSelector() {
   const sel = document.createElement('select');
   sel.id = 'map-selector';
   sel.className = 'map-selector';
-  maps.forEach(m => {
-    const opt = document.createElement('option');
-    opt.value = m.key;
-    opt.textContent = m.name;
-    if (m.key === currentMapKey) opt.selected = true;
-    sel.appendChild(opt);
-  });
   sel.addEventListener('change', () => switchMap(sel.value));
 
   wrap.appendChild(sel);
@@ -206,9 +199,34 @@ function _buildMapSelector() {
 function _refreshMapSelectorAccess() {
   const sel = document.getElementById('map-selector');
   if (!sel) return;
-  [...sel.options].forEach(opt => {
-    opt.disabled = !_canAccessMap(opt.value);
-  });
+  const maps = MAP_CONFIG.maps || [];
+  const accessibleMaps = maps.filter(m => _canAccessMap(m.key));
+  const previous = currentMapKey;
+
+  sel.innerHTML = '';
+  for (const m of accessibleMaps) {
+    const opt = document.createElement('option');
+    opt.value = m.key;
+    opt.textContent = m.name;
+    sel.appendChild(opt);
+  }
+
+  if (!accessibleMaps.length) {
+    sel.disabled = true;
+    return;
+  }
+
+  sel.disabled = false;
+  currentMapKey = accessibleMaps.some(m => m.key === previous)
+    ? previous
+    : accessibleMaps[0].key;
+  sel.value = currentMapKey;
+}
+
+function _ensureCurrentMapImage() {
+  if (!_canAccessMap()) return;
+  const hasImage = !!_mapCanvas?.querySelector('img.map-image');
+  if (!hasImage) _buildMapImage();
 }
 
 /** Bascule vers une autre carte. */
@@ -534,6 +552,7 @@ async function saveOwnLayerToDB() {
   _renderLayerPanel();
   _recomputeMapAccess();
   _refreshMapSelectorAccess();
+  _ensureCurrentMapImage();
   _renderMapAccessState();
   showToast(t('map_toast_saved'));
 }
@@ -619,6 +638,7 @@ async function followMapLayerByCode(code) {
   if (data.map_key && data.map_key !== currentMapKey) {
     await switchMap(data.map_key);
   } else {
+    _ensureCurrentMapImage();
     _renderAllMarkers();
   }
 
