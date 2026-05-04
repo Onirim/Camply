@@ -297,11 +297,9 @@
 }
 
 .map-popup-name {
-  font-family: var(--font-display);
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.04em;
-  text-transform: uppercase;
   color: var(--text);
   flex: 1;
   overflow: hidden;
