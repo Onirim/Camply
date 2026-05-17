@@ -42,6 +42,8 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 
+
+
 -- ── 2. Table characters ───────────────────────────────────────
 -- Chaque personnage appartient à un utilisateur (user_id).
 -- Les données du personnage sont stockées en JSONB (data).
@@ -111,6 +113,18 @@ DROP POLICY IF EXISTS "characters_insert" ON public.characters;
 CREATE POLICY "characters_insert"
   ON public.characters FOR INSERT
   WITH CHECK (auth.uid() = user_id);
+
+-- ── 2. Table followed_characters ─────────────────────────────
+
+CREATE TABLE IF NOT EXISTS public.followed_characters (
+  user_id      UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  character_id UUID NOT NULL REFERENCES public.characters(id) ON DELETE CASCADE,
+  followed_at  TIMESTAMPTZ DEFAULT NOW(),
+  PRIMARY KEY (user_id, character_id)
+);
+
+CREATE INDEX IF NOT EXISTS followed_user_idx
+  ON public.followed_characters(user_id);
 
 -- characters : modification
 --   → propriétaire
@@ -276,18 +290,6 @@ CREATE TRIGGER set_share_code
   WHEN (NEW.share_code IS NULL)
   EXECUTE FUNCTION public.generate_share_code();
 
-
--- ── 2. Table followed_characters ─────────────────────────────
-
-CREATE TABLE IF NOT EXISTS public.followed_characters (
-  user_id      UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  character_id UUID NOT NULL REFERENCES public.characters(id) ON DELETE CASCADE,
-  followed_at  TIMESTAMPTZ DEFAULT NOW(),
-  PRIMARY KEY (user_id, character_id)
-);
-
-CREATE INDEX IF NOT EXISTS followed_user_idx
-  ON public.followed_characters(user_id);
 
 
 -- ── 3. RLS ────────────────────────────────────────────────────
