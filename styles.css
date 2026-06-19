@@ -239,7 +239,8 @@ html, body {
 #view-editor.active { display: flex; }
 
 #editor-form { width: 380px; flex-shrink: 0; background: var(--bg2); border-right: 1px solid var(--border); overflow-y: auto; display: flex; flex-direction: column; }
-.form-section          { padding: 20px; border-bottom: 1px solid var(--border); }
+.form-section          { position: relative; z-index: 1; padding: 20px; border-bottom: 1px solid var(--border); }
+.form-section.tags-section { z-index: 30; }
 .form-section:last-child { border-bottom: none; }
 
 .form-section-title {
