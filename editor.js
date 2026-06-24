@@ -227,6 +227,12 @@ function addTrait() {
   updatePreview();
 }
 
+function removeTrait(i) {
+  state.traits.splice(i, 1);
+  renderTraits();
+  updatePreview();
+}
+
 
 // ══════════════════════════════════════════════════════════════
 // SCORE UNIVERSEL
