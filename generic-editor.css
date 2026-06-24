@@ -208,6 +208,28 @@
   font-style: italic;
 }
 
+/* ── Sélecteur de couleur de trait ── */
+.trait-color-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 8px 0 4px;
+}
+.trait-color-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform 0.1s, border-color 0.1s;
+  flex-shrink: 0;
+}
+.trait-color-swatch:hover { transform: scale(1.15); }
+.trait-color-swatch.selected {
+  border-color: var(--text);
+  transform: scale(1.1);
+}
+
 /* ══════════════════════════════════════════════════════════════
    FICHE PERSONNAGE — Aperçu compétences (2 colonnes)
    ══════════════════════════════════════════════════════════════ */
