@@ -181,7 +181,8 @@ function renderTraits() {
 }
 
 function traitHTML(tr, i) {
-  return `<div class="generic-entry trait-entry">
+  const color = tr.color || 'var(--border2)';
+  return `<div class="generic-entry trait-entry" style="border-left:3px solid ${esc(color)}">
     <div class="generic-entry-row" style="gap:6px">
       <input type="text"
         class="generic-input"
@@ -201,6 +202,12 @@ function traitHTML(tr, i) {
         </svg>
       </button>
     </div>
+    <div class="trait-color-row">
+      ${TAG_COLORS.map(c => `
+        <div class="trait-color-swatch ${tr.color === c ? 'selected' : ''}"
+          style="background:${c}"
+          onclick="selectTraitColor(${i}, '${c}')"></div>`).join('')}
+    </div>
     <textarea
       class="generic-textarea"
       placeholder="${t('editor_trait_detail_ph')}"
@@ -208,14 +215,14 @@ function traitHTML(tr, i) {
   </div>`;
 }
 
-function addTrait() {
-  state.traits.push({ id: _uid(), name: '', detail: '', score: '' });
+function selectTraitColor(i, color) {
+  state.traits[i].color = color;
   renderTraits();
   updatePreview();
 }
 
-function removeTrait(i) {
-  state.traits.splice(i, 1);
+function addTrait() {
+  state.traits.push({ id: _uid(), name: '', detail: '', score: '', color: randomTagColor() });
   renderTraits();
   updatePreview();
 }
