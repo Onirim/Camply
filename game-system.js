@@ -139,7 +139,7 @@ function renderCharSheet(data) {
     <div class="preview-section-title">${t('section_traits')}</div>
     <div class="compl-preview">
       ${traits.map(tr => `
-        <div class="compl-chip">
+        <div class="compl-chip" style="border-left:3px solid ${esc(tr.color || 'var(--border2)')}">
           <div style="display:flex;justify-content:space-between;align-items:center">
             <span>${esc(tr.name)}</span>
             ${tr.score !== '' && tr.score !== undefined && tr.score !== null
