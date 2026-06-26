@@ -28,6 +28,7 @@ const MAP_CONFIG = {
         '#9b7de8': 'Magie',
         '#e05c9b': '',
         '#5cbfbf': '',
+      },
     },
     // Décommentez et remplissez pour ajouter d'autres cartes :
      {
