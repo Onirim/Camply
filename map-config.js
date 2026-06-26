@@ -20,14 +20,14 @@ const MAP_CONFIG = {
       imageWidth:  4095,
       imageHeight: 4095,
       markerColorLabels: {
-        '#e05c5c': 'Danger',
-        '#e07a3a': 'Ressource',
-        '#e8c46a': 'Quête',
-        '#5cbf7a': 'Repos',
-        '#5c9be0': 'Eau',
-        '#9b7de8': 'Magie',
-        '#e05c9b': '',
-        '#5cbfbf': '',
+        '#e05c5c': 'Danger', //rouge
+        '#e07a3a': 'Ressource', //orange
+        '#e8c46a': 'Quête', //jaune
+        '#5cbf7a': 'Repos', //vert
+        '#5c9be0': 'Eau', //bleu
+        '#9b7de8': 'Magie', //violet
+        '#e05c9b': '', //rose
+        '#5cbfbf': '', //turquoise
       },
     },
     // Décommentez et remplissez pour ajouter d'autres cartes :
