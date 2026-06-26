@@ -19,6 +19,15 @@ const MAP_CONFIG = {
       image:       './pictures/map.png',
       imageWidth:  4095,
       imageHeight: 4095,
+      markerColorLabels: {
+        '#e05c5c': 'Danger',
+        '#e07a3a': 'Ressource',
+        '#e8c46a': 'Quête',
+        '#5cbf7a': 'Repos',
+        '#5c9be0': 'Eau',
+        '#9b7de8': 'Magie',
+        '#e05c9b': '',
+        '#5cbfbf': '',
     },
     // Décommentez et remplissez pour ajouter d'autres cartes :
      {
