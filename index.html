@@ -1079,6 +1079,14 @@
         </svg>
         <span data-i18n="map_share_panel_btn">Partage</span>
       </button>
+
+      <button class="map-panel-btn" id="map-legend-btn" onclick="toggleMapLegendPanel()" style="display:none">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13">
+          <circle cx="4" cy="4" r="2"/><circle cx="4" cy="12" r="2"/>
+          <line x1="8" y1="4" x2="14" y2="4"/><line x1="8" y1="12" x2="14" y2="12"/>
+        </svg>
+        <span data-i18n="map_legend_btn">Légende</span>
+      </button>
      
         <!-- Compteur -->
         <div class="map-marker-count" id="map-marker-count"><span>0</span> marqueur</div>
@@ -1087,6 +1095,7 @@
       <!-- Zone de carte -->
       <div class="map-viewport" id="map-viewport">
         <div id="map-layer-panel"></div>
+        <div id="map-legend-panel" class="map-legend-panel"></div>
         <div class="map-canvas" id="map-canvas"></div>
       </div>
      

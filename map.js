@@ -11,6 +11,7 @@ let mapOwnLayers      = {};   // map_key → layer
 let mapFollowedIds    = [];   // [layerId, ...]
 let mapLoaded         = false;
 let mapAccessByKey    = {};
+let mapColorFilter = {};   // mapKey → Set des couleurs masquées
 
 // Transformation courante
 let mapTransform = { x: 0, y: 0, scale: 1 };
@@ -46,6 +47,90 @@ function _ownLayer() {
 
 function _normalizeMapKey(mapKey) {
   return mapKey || 'default';
+}
+
+function _getCurrentColorLabels() {
+  const cfg = _getCurrentMapConfig();
+  return cfg?.markerColorLabels || {};
+}
+
+function _getHiddenColorsSet(mapKey = currentMapKey) {
+  if (!mapColorFilter[mapKey]) mapColorFilter[mapKey] = new Set();
+  return mapColorFilter[mapKey];
+}
+
+function _isColorVisible(color) {
+  return !_getHiddenColorsSet().has(color);
+}
+
+// Couleurs réellement affichables dans la légende : uniquement
+// celles qui ont un libellé non vide pour la carte courante.
+function _getLegendColors() {
+  const labels = _getCurrentColorLabels();
+  return (MAP_CONFIG.markerColors || []).filter(c => (labels[c] || '').trim());
+}
+
+function toggleMapColorFilter(color) {
+  const hidden = _getHiddenColorsSet();
+  if (hidden.has(color)) hidden.delete(color);
+  else hidden.add(color);
+  _renderMapLegend();
+  _renderAllMarkers();
+}
+
+function resetMapColorFilter() {
+  _getHiddenColorsSet().clear();
+  _renderMapLegend();
+  _renderAllMarkers();
+}
+
+function _renderMapLegend() {
+  const panel = document.getElementById('map-legend-panel');
+  const btn   = document.getElementById('map-legend-btn');
+  if (!panel) return;
+
+  const labels = _getCurrentColorLabels();
+  const hidden = _getHiddenColorsSet();
+  const colors = _getLegendColors();
+
+  // Pas de couleur libellée pour cette carte → on cache le bouton
+  if (btn) btn.style.display = colors.length ? 'flex' : 'none';
+
+  if (!colors.length) {
+    panel.classList.remove('open');
+    panel.innerHTML = '';
+    if (btn) btn.classList.remove('active');
+    return;
+  }
+
+  const anyHidden = colors.some(c => hidden.has(c));
+
+  panel.innerHTML = `
+    <div class="map-legend-header">
+      <div class="map-legend-title">${t('map_legend_title')}</div>
+      <button class="map-legend-reset" onclick="resetMapColorFilter()"
+        style="${anyHidden ? '' : 'display:none'}">${t('map_legend_reset')}</button>
+    </div>
+    <div class="map-legend-list">
+      ${colors.map(c => `
+        <div class="map-legend-item ${hidden.has(c) ? 'off' : ''}" onclick="toggleMapColorFilter('${c}')">
+          <span class="map-legend-dot" style="background:${c}"></span>
+          <span class="map-legend-label">${esc(labels[c])}</span>
+          <span class="map-legend-check">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11">
+              <polyline points="2,8 6,12 14,4"/>
+            </svg>
+          </span>
+        </div>`).join('')}
+    </div>`;
+}
+
+function toggleMapLegendPanel() {
+  const panel = document.getElementById('map-legend-panel');
+  const btn   = document.getElementById('map-legend-btn');
+  if (!panel) return;
+  const open = panel.classList.toggle('open');
+  if (btn) btn.classList.toggle('active', open);
 }
 
 function _isMarkerOnCurrentMap(marker) {
@@ -166,6 +251,7 @@ async function initMap() {
   _renderAllMarkers();
   _renderLayerPanel();
   _renderMapAccessState();
+  _renderMapLegend();
   mapLoaded = true;
 }
 
@@ -273,6 +359,7 @@ async function switchMap(key) {
 
   _renderLayerPanel();
   _renderMapAccessState();
+  _renderMapLegend();
 }
 
 // ── Construction de l'image ───────────────────────────────────
@@ -703,6 +790,7 @@ function _renderAllMarkers() {
 
 function _renderMarker(m, owned) {
   if (!_mapViewport || !_isMarkerOnCurrentMap(m)) return;
+  if (!_isColorVisible(m.color)) return;
   const size = MAP_CONFIG.markerSize;
 
   const el = document.createElement('div');
@@ -766,11 +854,13 @@ function _repositionRenderedMarkers() {
 function _updateMarkerCount() {
   const el = document.getElementById('map-marker-count');
   if (!el) return;
-  const own      = Object.values(mapMarkers).filter(m => _isMarkerOnCurrentMap(m)).length;
+  const own      = Object.values(mapMarkers)
+    .filter(m => _isMarkerOnCurrentMap(m) && _isColorVisible(m.color)).length;
   const followed = Object.values(mapFollowedLayers)
     .filter(({ layer }) => _normalizeMapKey(layer.map_key) === currentMapKey)
     .reduce((acc, { markers }) =>
-      acc + Object.values(markers).filter(m => _isMarkerOnCurrentMap(m)).length, 0);
+      acc + Object.values(markers)
+        .filter(m => _isMarkerOnCurrentMap(m) && _isColorVisible(m.color)).length, 0);
   const total = own + followed;
   el.innerHTML = ti(total === 1 ? 'map_marker_count_one' : 'map_marker_count_many', { n: total });
 }
@@ -1136,4 +1226,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     return items;
   };
+});
+
+const MAP_LEGEND_I18N = {
+  fr: {
+    map_legend_btn:   'Légende',
+    map_legend_title: 'Filtrer par couleur',
+    map_legend_reset: 'Tout afficher',
+  },
+  en: {
+    map_legend_btn:   'Legend',
+    map_legend_title: 'Filter by color',
+    map_legend_reset: 'Show all',
+  },
+};
+Object.keys(MAP_LEGEND_I18N).forEach(lang => {
+  if (TRANSLATIONS[lang]) Object.assign(TRANSLATIONS[lang], MAP_LEGEND_I18N[lang]);
 });
