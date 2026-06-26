@@ -4,7 +4,7 @@
 // ══════════════════════════════════════════════════════════════
 
 const MAP_CONFIG = {
-  // ── Cartes disponibles (1 à 5) ────────────────────────────
+  // ── Cartes disponibles ────────────────────────────
   // Chaque carte a une clé unique (key), un nom affiché (name),
   // le chemin de son image et ses dimensions natives en pixels.
   //
@@ -19,15 +19,15 @@ const MAP_CONFIG = {
       image:       './pictures/map.png',
       imageWidth:  4095,
       imageHeight: 4095,
-      markerColorLabels: {
-        '#e05c5c': 'Danger', //rouge
-        '#e07a3a': 'Ressource', //orange
-        '#e8c46a': 'Quête', //jaune
-        '#5cbf7a': 'Repos', //vert
-        '#5c9be0': 'Eau', //bleu
-        '#9b7de8': 'Magie', //violet
-        '#e05c9b': '', //rose
-        '#5cbfbf': '', //turquoise
+     markerColorLabels: {
+        '#e05c5c': 'Rouge', //rouge
+        '#e07a3a': 'Orange', //orange
+        '#e8c46a': 'Jaune', //jaune
+        '#5cbf7a': 'Vert', //vert
+        '#5c9be0': 'Bleu', //bleu
+        '#9b7de8': 'Violet', //violet
+        '#e05c9b': 'Rose', //rose
+        '#5cbfbf': 'Turquoise', //turquoise
       },
     },
     // Décommentez et remplissez pour ajouter d'autres cartes :
@@ -37,6 +37,16 @@ const MAP_CONFIG = {
       image:       './pictures/map.png',
       imageWidth:  4095,
       imageHeight: 4095,
+      markerColorLabels: {
+        '#e05c5c': 'Rouge', //rouge
+        '#e07a3a': 'Orange', //orange
+        '#e8c46a': 'Jaune', //jaune
+        '#5cbf7a': 'Vert', //vert
+        '#5c9be0': 'Bleu', //bleu
+        '#9b7de8': 'Violet', //violet
+        '#e05c9b': 'Rose', //rose
+        '#5cbfbf': 'Turquoise', //turquoise
+      },
     },
     // {
     //   key:         'dungeon',
@@ -44,6 +54,16 @@ const MAP_CONFIG = {
     //   image:       './pictures/dungeon.png',
     //   imageWidth:  2048,
     //   imageHeight: 2048,
+    //    markerColorLabels: {
+    //    '#e05c5c': 'Rouge', //rouge
+    //    '#e07a3a': 'Orange', //orange
+    //    '#e8c46a': 'Jaune', //jaune
+    //    '#5cbf7a': 'Vert', //vert
+    //    '#5c9be0': 'Bleu', //bleu
+    //    '#9b7de8': 'Violet', //violet
+    //    '#e05c9b': 'Rose', //rose
+    //    '#5cbfbf': 'Turquoise', //turquoise
+    //  },
     // },
     // {
     //   key:         'region',
@@ -51,6 +71,16 @@ const MAP_CONFIG = {
     //   image:       './pictures/region.png',
     //   imageWidth:  4096,
     //   imageHeight: 3000,
+    //    markerColorLabels: {
+    //    '#e05c5c': 'Rouge', //rouge
+    //    '#e07a3a': 'Orange', //orange
+    //    '#e8c46a': 'Jaune', //jaune
+    //    '#5cbf7a': 'Vert', //vert
+    //    '#5c9be0': 'Bleu', //bleu
+    //    '#9b7de8': 'Violet', //violet
+    //    '#e05c9b': 'Rose', //rose
+    //    '#5cbfbf': 'Turquoise', //turquoise
+    //  },
     // },
     // {
     //   key:         'sea',
@@ -58,6 +88,16 @@ const MAP_CONFIG = {
     //   image:       './pictures/sea.png',
     //   imageWidth:  5000,
     //   imageHeight: 3500,
+    //    markerColorLabels: {
+    //    '#e05c5c': 'Rouge', //rouge
+    //    '#e07a3a': 'Orange', //orange
+    //    '#e8c46a': 'Jaune', //jaune
+    //    '#5cbf7a': 'Vert', //vert
+    //    '#5c9be0': 'Bleu', //bleu
+    //    '#9b7de8': 'Violet', //violet
+    //    '#e05c9b': 'Rose', //rose
+    //    '#5cbfbf': 'Turquoise', //turquoise
+    //  },
     // },
   ],
 
