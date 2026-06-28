@@ -76,7 +76,7 @@ function populateEditor() {
   setIllusPreview(state.illustration_url || '', state.illustration_position || 0);
   updatePreview();
 }
-}
+
 
 // ── Share code ────────────────────────────────────────────────
 function _updateShareCodeBox() {
