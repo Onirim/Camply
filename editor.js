@@ -5,8 +5,6 @@
 function newChar() {
   editingId = null;
   state     = freshState();
-  editingIsFollowedChar = false;
-  currentSecretDraft    = '';
   populateEditor();
   showView('editor');
 }
@@ -26,9 +24,6 @@ function editChar(id, dataOverride) {
       .map(tid => allTags.find(tg => tg.id === tid))
       .filter(Boolean);
   }
-  editingIsFollowedChar = !!(id && followedChars[id] && !chars[id]);
-  currentSecretDraft    = editingIsFollowedChar ? '' : (charSecrets[id] || '');
-  
   populateEditor();
   showView('editor');
 }
@@ -57,15 +52,6 @@ function populateEditor() {
   if (bgField) bgField.value = state.background || '';
   const descriptionField = document.getElementById('f-description');
   if (descriptionField) descriptionField.value = state.description || '';
-
-  renderTagChips();
-  setIllusPreview(state.illustration_url || '', state.illustration_position || 0);
-  updatePreview();
-
-  const secretField   = document.getElementById('f-secret');
-  const secretSection = document.getElementById('secret-section');
-  if (secretSection) secretSection.style.display = editingIsFollowedChar ? 'none' : '';
-  if (secretField)   secretField.value = currentSecretDraft;
 
   renderTagChips();
   setIllusPreview(state.illustration_url || '', state.illustration_position || 0);
@@ -324,19 +310,7 @@ function updatePreview() {
   }
   _updateShareCodeBox();
 
-  document.getElementById('preview-content').innerHTML =
-    renderCharSheet(state) + renderSecretPreviewBlock();
-}
-
-function renderSecretPreviewBlock() {
-  if (editingIsFollowedChar) return '';
-  const content = currentSecretDraft
-    ? esc(currentSecretDraft)
-    : `<em>${t('secret_preview_empty')}</em>`;
-  return `
-    <div class="preview-section-title">🔒 ${t('section_secret')}</div>
-    <div class="background-preview">${content}</div>
-  `;
+  document.getElementById('preview-content').innerHTML = renderCharSheet(state);
 }
 
 
