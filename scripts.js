@@ -16,9 +16,6 @@ let followedChars    = {};
 let followedIds      = [];
 let followedTagMap   = {};
 let filterFollowed   = false;
-let charSecrets        = {};   // db_id -> contenu secret (uniquement pour ses propres persos)
-let editingIsFollowedChar = false;
-let currentSecretDraft = '';
 
 function normalizeDiscordName(name) {
   return (name || '')
@@ -171,26 +168,6 @@ async function loadCharsFromDB() {
   });
   await loadTagsFromDB();
   await loadFollowedCharsFromDB();
-  await loadCharSecretsFromDB(); 
-}
-
-async function loadCharSecretsFromDB() {
-  const ids = Object.keys(chars);
-  if (!ids.length) { charSecrets = {}; return; }
-  const { data, error } = await sb.from('character_secrets')
-    .select('character_id, content')
-    .in('character_id', ids);
-  if (error) { console.error('Erreur chargement secrets:', error); return; }
-  charSecrets = {};
-  (data || []).forEach(r => { charSecrets[r.character_id] = r.content; });
-}
-
-async function saveCharSecretToDB(charId, content) {
-  if (!charId) return;
-  const { error } = await sb.from('character_secrets')
-    .upsert({ character_id: charId, content: content || '' }, { onConflict: 'character_id' });
-  if (error) { console.error('Erreur sauvegarde secret:', error); return; }
-  charSecrets[charId] = content || '';
 }
 
 async function saveCharToDB() {
@@ -220,7 +197,6 @@ async function saveCharToDB() {
     await saveCharTagsToDB(editingId);
     chars[editingId] = { ...state, _db_id: editingId, _owner_id: currentUser.id };
     charTagMap[editingId] = (state.tags || []).map(tg => tg.id);
-    await saveCharSecretToDB(editingId, currentSecretDraft);
   } else if (followedChars[editingId]) {
     followedChars[editingId] = {
       ...followedChars[editingId],
@@ -249,7 +225,6 @@ async function deleteCharFromDB(id) {
   if (error) { showToast(t('toast_char_deleted_error')); return; }
   delete chars[id];
   delete charTagMap[id];
-  delete charSecrets[id];
   if (illustrationUrl) await deleteStorageFile(illustrationUrl);
   for (const tagId of tagIds) {
   const { count: c1 } = await sb.from('character_tags')
