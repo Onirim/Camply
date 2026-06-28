@@ -171,6 +171,12 @@ const TRANSLATIONS = {
     editor_tag_create_hint:    'Créer',
     editor_mobile_edit:        '✏️ Éditer',
     editor_mobile_preview:     '👁 Aperçu',
+    section_secret:           'Secret',
+    editor_section_secret:    'Secret',
+    editor_secret_ph:         'Notes privées sur ce personnage, visibles uniquement par vous…',
+    editor_secret_hint:       "Personne d'autre ne voit cette note — même le propriétaire du personnage, si ce n'est pas vous.",
+    toast_secret_saved:       'Note secrète sauvegardée !',
+    toast_secret_save_error:  'Erreur lors de la sauvegarde de la note.',
 
     // ── Tags ──────────────────────────────────────────────────
     followed_tags_modal_label: 'Tags locaux',
@@ -482,6 +488,12 @@ const TRANSLATIONS = {
     editor_tag_create_hint:   'Create',
     editor_mobile_edit:       '✏️ Edit',
     editor_mobile_preview:    '👁 Preview',
+    section_secret:           'Secret',
+    editor_section_secret:    'Secret',
+    editor_secret_ph:         'Private notes about this character, visible only to you…',
+    editor_secret_hint:       "No one else sees this note — not even the character's owner, if that's not you.",
+    toast_secret_saved:       'Secret note saved!',
+    toast_secret_save_error:  'Error while saving the note.',
 
     // ── Tags ──────────────────────────────────────────────────
     followed_tags_modal_label: 'Local tags',
