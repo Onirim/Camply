@@ -652,7 +652,7 @@ body::before {
 
 /* Form actions */
 .form-actions { padding: 16px 22px; background: var(--bg2); border-top: 1px solid var(--border); display: flex; gap: 8px; position: sticky; bottom: 0; z-index: 12; }
-.btn-save { flex: 1; background: linear-gradient(135deg, #2d1440 0%, #4a1a5a 100%); color: var(--accent); font-family: 'Cinzel', serif; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 10px; border-radius: 3px; border: 1px solid var(--border2); cursor: pointer; transition: all 0.2s; }
+.btn-save { flex: 1; background: linear-gradient(135deg, #2d1440 0%, #4a1a5a 100%); font-family: 'Cinzel', serif; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 10px; border-radius: 3px; border: 1px solid var(--border2); cursor: pointer; transition: all 0.2s; }
 .btn-save:hover { background: linear-gradient(135deg, #3d1a55 0%, #5e2270 100%); border-color: var(--accent); box-shadow: var(--glow-accent); }
 .btn-save.btn-save-sup {
   background: linear-gradient(135deg, #15303f 0%, #1f495f 100%);
