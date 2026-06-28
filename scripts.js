@@ -17,6 +17,7 @@ let followedIds      = [];
 let followedTagMap   = {};
 let filterFollowed   = false;
 let charSecrets = {}; 
+let currentSecretDraft = '';
 
 function normalizeDiscordName(name) {
   return (name || '')
