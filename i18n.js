@@ -177,6 +177,7 @@ const TRANSLATIONS = {
     editor_secret_hint:       "Personne d'autre ne voit cette note — même le propriétaire du personnage, si ce n'est pas vous.",
     toast_secret_saved:       'Note secrète sauvegardée !',
     toast_secret_save_error:  'Erreur lors de la sauvegarde de la note.',
+    secret_preview_empty:     'Aucun secret saisi.',
 
     // ── Tags ──────────────────────────────────────────────────
     followed_tags_modal_label: 'Tags locaux',
@@ -494,6 +495,7 @@ const TRANSLATIONS = {
     editor_secret_hint:       "No one else sees this note — not even the character's owner, if that's not you.",
     toast_secret_saved:       'Secret note saved!',
     toast_secret_save_error:  'Error while saving the note.',
+    secret_preview_empty:     'No secret entered.',
 
     // ── Tags ──────────────────────────────────────────────────
     followed_tags_modal_label: 'Local tags',
