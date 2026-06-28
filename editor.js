@@ -5,6 +5,8 @@
 function newChar() {
   editingId = null;
   state     = freshState();
+  editingIsFollowedChar = false;
+  currentSecretDraft    = '';
   populateEditor();
   showView('editor');
 }
