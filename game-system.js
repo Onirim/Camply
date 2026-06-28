@@ -218,6 +218,13 @@ const GAME_I18N = {
     // Alertes
     alert_char_no_name:  'Veuillez donner un nom au personnage.',
     alert_trigram_3:     'Le trigramme doit faire exactement 3 lettres.',
+
+    // Secret
+    editor_section_secret: 'Secret',
+    editor_secret_ph:      'Notes privées visibles uniquement par vous…',
+    editor_secret_hint:    "Ce contenu n'est jamais visible par les autres joueurs, même si le personnage est public.",
+    section_secret:        'Secret',
+    secret_preview_empty:  'Aucune note secrète pour l\'instant.',
   },
 
   en: {
@@ -261,6 +268,13 @@ const GAME_I18N = {
 
     alert_char_no_name:  'Please give the character a name.',
     alert_trigram_3:     'Trigram must be exactly 3 letters.',
+
+    // Secret
+    editor_section_secret: 'Secret',
+    editor_secret_ph:      'Private notes visible only to you…',
+    editor_secret_hint:    'This content is never visible to other players, even if the character is public.',
+    section_secret:        'Secret',
+    secret_preview_empty:  'No secret notes yet.',
   },
 };
 
