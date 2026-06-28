@@ -32,10 +32,13 @@ function editChar(id, dataOverride) {
   // Chargement asynchrone de MA note perso sur ce personnage
   // (qu'il soit mien ou non — chacun a la sienne)
   if (editingId) {
-    loadCharSecret(editingId).then(content => {
+    const secretCharId = editingId;
+    loadCharSecret(secretCharId).then(content => {
+      if (editingId !== secretCharId) return;
       currentSecretDraft = content;
       const f = document.getElementById('f-secret');
       if (f) f.value = content;
+      updatePreview();
     });
   }
 }
