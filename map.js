@@ -125,6 +125,16 @@ function _renderMapLegend() {
     </div>`;
 }
 
+// ── Libellés permanents ───────────────────────────────────────
+let mapLabelsVisible = false;
+
+function toggleMapLabels() {
+  mapLabelsVisible = !mapLabelsVisible;
+  if (_mapViewport) _mapViewport.classList.toggle('labels-visible', mapLabelsVisible);
+  const btn = document.getElementById('map-labels-btn');
+  if (btn) btn.classList.toggle('active', mapLabelsVisible);
+}
+
 function toggleMapLegendPanel() {
   const panel = document.getElementById('map-legend-panel');
   const btn   = document.getElementById('map-legend-btn');
@@ -1233,11 +1243,14 @@ const MAP_LEGEND_I18N = {
     map_legend_btn:   'Légende',
     map_legend_title: 'Filtrer par couleur',
     map_legend_reset: 'Tout afficher',
+    map_legend_btn:   'Légende',
+    map_labels_btn:   'Libellés',
   },
   en: {
     map_legend_btn:   'Legend',
     map_legend_title: 'Filter by color',
     map_legend_reset: 'Show all',
+    map_labels_btn:   'Labels',
   },
 };
 Object.keys(MAP_LEGEND_I18N).forEach(lang => {
