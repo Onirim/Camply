@@ -5,6 +5,7 @@
 function newChar() {
   editingId = null;
   state     = freshState();
+  currentSecretDraft = '';
   populateEditor();
   showView('editor');
 }
@@ -17,15 +18,29 @@ function editChar(id, dataOverride) {
   if (!state.skills)          state.skills          = [];
   if (!state.traits)          state.traits          = [];
   if (!state.tags)            state.tags            = [];
-  // Niveau : 0 est valide (pas de niveau)
   if (state.level === undefined || state.level === null) state.level = 0;
   if (editingId && charTagMap[editingId]) {
     state.tags = charTagMap[editingId]
       .map(tid => allTags.find(tg => tg.id === tid))
       .filter(Boolean);
   }
+
+  currentSecretDraft = '';
   populateEditor();
   showView('editor');
+
+  // Chargement asynchrone de MA note perso sur ce personnage
+  // (qu'il soit mien ou non — chacun a la sienne)
+  if (editingId) {
+    const secretCharId = editingId;
+    loadCharSecret(secretCharId).then(content => {
+      if (editingId !== secretCharId) return;
+      currentSecretDraft = content;
+      const f = document.getElementById('f-secret');
+      if (f) f.value = content;
+      updatePreview();
+    });
+  }
 }
 
 function populateEditor() {
@@ -56,7 +71,15 @@ function populateEditor() {
   renderTagChips();
   setIllusPreview(state.illustration_url || '', state.illustration_position || 0);
   updatePreview();
+
+  const secretField = document.getElementById('f-secret');
+  if (secretField) secretField.value = currentSecretDraft;
+
+  renderTagChips();
+  setIllusPreview(state.illustration_url || '', state.illustration_position || 0);
+  updatePreview();
 }
+
 
 // ── Share code ────────────────────────────────────────────────
 function _updateShareCodeBox() {
@@ -310,7 +333,18 @@ function updatePreview() {
   }
   _updateShareCodeBox();
 
-  document.getElementById('preview-content').innerHTML = renderCharSheet(state);
+  document.getElementById('preview-content').innerHTML = renderCharSheet(state) + renderSecretPreviewBlock();
+}
+
+function renderSecretPreviewBlock() {
+  const content = currentSecretDraft
+    ? esc(currentSecretDraft)
+    : `<em>${t('secret_preview_empty') || ''}</em>`;
+  return `
+    <div class="preview-section-title">🔒 ${t('section_secret')}</div>
+    <div class="background-preview">${content}</div>
+  `;
+
 }
 
 

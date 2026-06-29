@@ -16,6 +16,8 @@ let followedChars    = {};
 let followedIds      = [];
 let followedTagMap   = {};
 let filterFollowed   = false;
+let charSecrets = {}; 
+let currentSecretDraft = '';
 
 function normalizeDiscordName(name) {
   return (name || '')
@@ -193,6 +195,7 @@ async function saveCharToDB() {
   }
   editingId        = result.data.id;
   state.share_code = result.data.share_code;
+  await saveCharSecretToDB(editingId, currentSecretDraft);
   if (!isEditingFollowedChar) {
     await saveCharTagsToDB(editingId);
     chars[editingId] = { ...state, _db_id: editingId, _owner_id: currentUser.id };
@@ -347,6 +350,35 @@ async function unfollowChar(charId) {
 }
 
 // ══════════════════════════════════════════════════════════════
+// DB — NOTE SECRÈTE PERSONNELLE (par joueur, sur n'importe quel perso)
+// ══════════════════════════════════════════════════════════════
+
+async function loadCharSecret(charId) {
+  if (!charId || !currentUser) return '';
+  if (charSecrets[charId] !== undefined) return charSecrets[charId];
+  const { data, error } = await sb.from('character_secrets')
+    .select('content')
+    .eq('character_id', charId)
+    .eq('user_id', currentUser.id)
+    .maybeSingle();
+  if (error) { console.warn('loadCharSecret:', error.message); charSecrets[charId] = ''; return ''; }
+  charSecrets[charId] = data?.content || '';
+  return charSecrets[charId];
+}
+
+async function saveCharSecretToDB(charId, content) {
+  if (!charId || !currentUser) return;
+  const { error } = await sb.from('character_secrets')
+    .upsert(
+      { character_id: charId, user_id: currentUser.id, content: content || '' },
+      { onConflict: 'character_id,user_id' }
+    );
+  if (error) { console.error('saveCharSecretToDB:', error.message); showToast(t('toast_secret_save_error')); return; }
+  charSecrets[charId] = content || '';
+  showToast(t('toast_secret_saved'));
+}
+
+// ══════════════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════════════
 
@@ -408,6 +440,7 @@ function onSignedOut() {
   currentUser = null;
   unreadMarkers.resetCache();
   chars = {};
+  charSecrets = {};
   document.getElementById('loading-overlay').classList.remove('active');
   document.getElementById('auth-screen').classList.add('active');
   document.getElementById('app').style.display = 'none';
@@ -619,17 +652,42 @@ function showSharedChar(data) {
       ${t('shared_view_banner')}
     </div>
     ${renderCharSheet(data)}
+    ${sharedCharacterId ? renderSecretNoteBlock(sharedCharacterId) : ''}
   `;
   showView('shared');
-  const characterId = data?.id || data?._db_id;
   unreadMarkers.refreshNavBadges({ followedChars, followedDocuments, followedChronicles, chrEntries });
   currentSharedCharCode = data.share_code || null;
   if (data.share_code) setHash('char', data.share_code);
+  if (sharedCharacterId) _fillSecretNoteBlock(sharedCharacterId);
 }
 
-function shareSharedChar() {
-  if (!currentSharedCharCode) { showToast(t('toast_char_not_found')); return; }
-  copyUrl(buildShareUrl('char', currentSharedCharCode));
+// ── Bloc note secrète réutilisable (vue partagée) ──────────────
+let _secretNoteDraft = '';
+
+function renderSecretNoteBlock(charId) {
+  return `
+    <div class="preview-section-title">🔒 ${t('section_secret')}</div>
+    <div class="background-field">
+      <textarea id="secret-note-textarea"
+        placeholder="${esc(t('editor_secret_ph'))}"
+        oninput="_secretNoteDraft=this.value"></textarea>
+    </div>
+    <div class="section-hint">${t('editor_secret_hint')}</div>
+    <button class="btn-save" style="margin-top:10px;flex:none" onclick="saveSecretNoteFromBlock('${charId}')">
+      ${t('btn_save')}
+    </button>
+  `;
+}
+
+async function _fillSecretNoteBlock(charId) {
+  const content = await loadCharSecret(charId);
+  _secretNoteDraft = content;
+  const ta = document.getElementById('secret-note-textarea');
+  if (ta) ta.value = content;
+}
+
+async function saveSecretNoteFromBlock(charId) {
+  await saveCharSecretToDB(charId, _secretNoteDraft);
 }
 
 // ══════════════════════════════════════════════════════════════
